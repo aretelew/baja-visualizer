@@ -22,7 +22,7 @@ interface TeamData {
 const chartConfig = {
   Overall: {
     label: 'Overall Score',
-    color: 'var(--chart-1)',
+    color: '#2563eb', // moderate blue (tailwind blue-600)
   },
 };
 
@@ -78,7 +78,7 @@ export function CompetitionOverview() {
               tickMargin={10}
               axisLine={false}
             />
-            <XAxis dataKey="Overall (1000)" type="number" hide />
+            <XAxis dataKey="Overall (1000)" type="number" />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent indicator="line" />}

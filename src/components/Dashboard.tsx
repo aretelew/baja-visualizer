@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart3, LineChart, PieChart, TrendingUp } from "lucide-react"
+import { MostConsistentPrograms } from "./MostConsistentPrograms"
 import { CompetitionOverview } from "./CompetitionOverview"
 import { TeamPerformance } from "./TeamPerformance"
 import { TrendAnalysis } from "./TrendAnalysis"
@@ -28,7 +29,7 @@ export function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto  px-6 py-8">
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="bg-card border border-border">
             <TabsTrigger value="overview" className="gap-2">
@@ -51,6 +52,8 @@ export function Dashboard() {
 
           <TabsContent value="overview" className="space-y-6">
             <CompetitionOverview />
+            <TrendAnalysis />
+            <MostConsistentPrograms />
           </TabsContent>
 
           <TabsContent value="teams" className="space-y-6">
@@ -58,7 +61,7 @@ export function Dashboard() {
           </TabsContent>
 
           <TabsContent value="trends" className="space-y-6">
-            <TrendAnalysis />
+            
           </TabsContent>
 
           <TabsContent value="compare" className="space-y-6">
