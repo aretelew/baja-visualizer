@@ -51,9 +51,9 @@ export function TeamPerformance() {
 
   const yearTicks = [];
   const displayedYears = new Set();
-  for (const d of chartData) {
+  for (const d of teamPerformance) {
     const year = d.year;
-    if (!displayedYears.has(year)) {
+    if (year && !displayedYears.has(year)) {
       yearTicks.push(d.competition);
       displayedYears.add(year);
     }
@@ -125,7 +125,7 @@ export function TeamPerformance() {
             className="h-[400px] w-full px-4"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+              <LineChart data={teamPerformance}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis 
                   dataKey="competition" 
