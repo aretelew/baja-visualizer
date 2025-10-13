@@ -39,16 +39,19 @@ export function TrendAnalysis() {
         const stats: { [key: string]: { scores: number[]; count: number } } = {};
 
         for (const competition in jsonData) {
-          for (const team of jsonData[competition]) {
-            const teamName = team['Canonical_Team'];
-            const score = team['Overall (1000)'];
+          for (const team of Object.values(jsonData[competition as keyof typeof jsonData])) {
+            if (team && team.Overall && team.Overall.team_key) {
+              const teamName = team.Overall.team_key;
+              const score = team.Overall['Overall (1000)'];
 
-            if (!stats[teamName]) {
-              stats[teamName] = { scores: [], count: 0 };
+              if (typeof score === 'number') {
+                if (!stats[teamName]) {
+                  stats[teamName] = { scores: [], count: 0 };
+                }
+                stats[teamName].scores.push(score);
+                stats[teamName].count++;
+              }
             }
-
-            stats[teamName].scores.push(score);
-            stats[teamName].count++;
           }
         }
 
@@ -65,13 +68,17 @@ export function TrendAnalysis() {
 
         setTopTeams(top10Teams);
 
-        const competitionNames = Object.keys(jsonData).reverse(); // chronological order
+        const competitionNames = Object.keys(jsonData).sort((a, b) => {
+          const yearA = parseInt(a.slice(-4));
+          const yearB = parseInt(b.slice(-4));
+          return yearA - yearB;
+        });
 
         const newChartData = competitionNames.map(competition => {
           const competitionData: any = { competition };
           for (const teamName of top10Teams) {
-            const teamData = jsonData[competition].find((t: any) => t['Canonical_Team'] === teamName);
-            competitionData[teamName] = teamData ? teamData['Overall (1000)'] : null;
+            const teamData = Object.values(jsonData[competition as keyof typeof jsonData]).find((t: any) => t.Overall && t.Overall.team_key === teamName);
+            competitionData[teamName] = teamData ? teamData.Overall['Overall (1000)'] : null;
           }
           return competitionData;
         });
@@ -103,7 +110,7 @@ export function TrendAnalysis() {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
+              tickFormatter={(value) => value.slice(-4)}
             />
             <YAxis />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />

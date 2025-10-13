@@ -17,12 +17,14 @@ import { Combobox } from '@/components/ui/combobox';
 interface TeamData {
   'Canonical_Team': string;
   'Overall (1000)': number;
+  'team_key': string;
+  'school': string;
 }
 
 const chartConfig = {
   Overall: {
     label: 'Overall Score',
-    color: '#2563eb', // moderate blue (tailwind blue-600)
+    color: 'var(--primary)',
   },
 };
 
@@ -46,10 +48,22 @@ export function CompetitionOverview() {
   useEffect(() => {
     if (allData && selectedCompetition) {
       const competitionData = allData[selectedCompetition];
-      const top10 = competitionData
-        .sort((a: TeamData, b: TeamData) => b['Overall (1000)'] - a['Overall (1000)'])
+      const top10 = Object.values(competitionData)
+        .filter((team: any) => team && team.Overall)
+        .map((team: any) => {
+          const school = team.Overall.School;
+          const team_key = team.Overall.team_key;
+          const teamName = team_key.replace(school + ' - ', '');
+          return {
+            'Canonical_Team': teamName,
+            'Overall (1000)': team.Overall['Overall (1000)'],
+            'team_key': team_key,
+            'school': school,
+          }
+        })
+        .sort((a, b) => b['Overall (1000)'] - a['Overall (1000)'])
         .slice(0, 10);
-      setChartData(top10);
+      setChartData(top10 as TeamData[]);
     }
   }, [allData, selectedCompetition]);
 
@@ -81,9 +95,22 @@ export function CompetitionOverview() {
             <XAxis dataKey="Overall (1000)" type="number" />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent indicator="line" />}
+              content={<ChartTooltipContent
+                indicator="line"
+                labelFormatter={(value, payload) => {
+                  if (payload && payload.length > 0) {
+                    return (
+                      <div className="flex flex-col gap-1 p-1">
+                        <span className="font-bold">{value}</span>
+                        <span className="text-muted-foreground">{payload[0].payload.school}</span>
+                      </div>
+                    )
+                  }
+                  return value;
+                }}
+              />}
             />
-            <Bar dataKey="Overall (1000)" layout="vertical" radius={4} fill="var(--color-Overall)" />
+            <Bar dataKey="Overall (1000)" radius={4} fill="var(--color-Overall)" />
           </BarChart>
         </ChartContainer>
       </CardContent>

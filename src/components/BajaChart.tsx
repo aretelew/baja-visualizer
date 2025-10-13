@@ -32,13 +32,22 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function BajaChart() {
-  const [activeCompetition, setActiveCompetition] = React.useState("arizona")
+const competitions = Object.keys(bajaData);
 
-  const chartData = bajaData.map((team) => ({
-    team: team.Canonical_Team,
-    points: team["Overall (1000)"],
-  }))
+export function BajaChart() {
+  const [activeCompetition, setActiveCompetition] = React.useState(competitions[0])
+
+  const chartData = React.useMemo(() => {
+    const competitionData = bajaData[activeCompetition as keyof typeof bajaData];
+    if (!competitionData) return [];
+    return Object.values(competitionData)
+      .filter((team: any) => team && team.Overall)
+      .map((team: any) => ({
+        team: team.Overall.School,
+        points: team.Overall["Overall (1000)"],
+      }))
+      .sort((a, b) => b.points - a.points);
+  }, [activeCompetition]);
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -46,7 +55,7 @@ export function BajaChart() {
         <div>
           <CardTitle>Baja SAE Results</CardTitle>
           <CardDescription>
-            Top teams ranked by points at the most recent competition
+            Top teams ranked by points
           </CardDescription>
         </div>
         <Select value={activeCompetition} onValueChange={setActiveCompetition}>
@@ -54,8 +63,9 @@ export function BajaChart() {
             <SelectValue placeholder="Select Competition" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="arizona">Arizona 2025</SelectItem>
-            <SelectItem value="maryland">Maryland 2025</SelectItem>
+            {competitions.map(comp => (
+              <SelectItem key={comp} value={comp}>{comp}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </CardHeader>

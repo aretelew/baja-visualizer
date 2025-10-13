@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/table';
 
 interface TeamStats {
+  schoolName: string;
   teamName: string;
   averageScore: number;
   bestScore: number;
@@ -27,33 +28,50 @@ export function MostConsistentPrograms() {
 
   useEffect(() => {
     const jsonData = bajaData;
-    const stats: { [key: string]: { scores: number[]; count: number; best: number } } = {};
+    const stats: { [key: string]: { scores: number[]; count: number; best: number; recentTeamName: string; recentCompetitionYear: number; } } = {};
 
-    for (const competition in jsonData) {
-      for (const team of jsonData[competition]) {
-        const teamName = team['Canonical_Team'];
-        const score = team['Overall (1000)'];
+    const competitionKeys = Object.keys(jsonData).sort();
 
-        if (!stats[teamName]) {
-          stats[teamName] = { scores: [], count: 0, best: 0 };
-        }
+    for (const competition of competitionKeys) {
+      const competitionYearMatch = competition.match(/\d{4}/);
+      const competitionYear = competitionYearMatch ? parseInt(competitionYearMatch[0]) : 0;
 
-        stats[teamName].scores.push(score);
-        stats[teamName].count++;
-        if (score > stats[teamName].best) {
-          stats[teamName].best = score;
+      const competitionData = jsonData[competition as keyof typeof jsonData];
+      for (const team of Object.values(competitionData)) {
+        if (team && team.Overall && team.Overall.School && team.Overall.team_key) {
+          const schoolName = team.Overall.School;
+          const teamName = team.Overall.team_key;
+          const score = team.Overall['Overall (1000)'];
+
+          if (typeof score === 'number') {
+            if (!stats[schoolName]) {
+              stats[schoolName] = { scores: [], count: 0, best: 0, recentTeamName: '', recentCompetitionYear: 0 };
+            }
+
+            stats[schoolName].scores.push(score);
+            stats[schoolName].count++;
+            if (score > stats[schoolName].best) {
+              stats[schoolName].best = score;
+            }
+
+            if (competitionYear >= stats[schoolName].recentCompetitionYear) {
+              stats[schoolName].recentCompetitionYear = competitionYear;
+              stats[schoolName].recentTeamName = teamName;
+            }
+          }
         }
       }
     }
 
-    const calculatedStats: TeamStats[] = Object.keys(stats).map(teamName => {
-      const teamData = stats[teamName];
-      const averageScore = teamData.scores.reduce((a, b) => a + b, 0) / teamData.count;
+    const calculatedStats: TeamStats[] = Object.keys(stats).map(schoolName => {
+      const schoolData = stats[schoolName];
+      const averageScore = schoolData.scores.reduce((a, b) => a + b, 0) / schoolData.count;
       return {
-        teamName,
+        schoolName: schoolName,
+        teamName: schoolData.recentTeamName,
         averageScore: parseFloat(averageScore.toFixed(2)),
-        bestScore: teamData.best,
-        competitionCount: teamData.count,
+        bestScore: schoolData.best,
+        competitionCount: schoolData.count,
       };
     });
 
@@ -82,7 +100,7 @@ export function MostConsistentPrograms() {
           </TableHeader>
           <TableBody>
             {teamStats.map(team => (
-              <TableRow key={team.teamName}>
+              <TableRow key={team.schoolName}>
                 <TableCell className="text-left">{team.teamName}</TableCell>
                 <TableCell className="text-left">{team.averageScore}</TableCell>
                 <TableCell className="text-left">{team.bestScore}</TableCell>
