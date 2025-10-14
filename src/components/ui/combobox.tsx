@@ -31,6 +31,14 @@ export function Combobox({
   className?: string
 }) {
   const [open, setOpen] = React.useState(false)
+  const listRef = React.useRef<HTMLDivElement>(null)
+  const [search, setSearch] = React.useState("")
+
+  React.useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = 0
+    }
+  }, [search])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -39,7 +47,7 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-[200px] justify-between", className)}
+          className={cn("w-[200px] justify-between h-auto whitespace-normal", className)}
         >
           {value
             ? options.find((option) => option.value === value)?.label
@@ -49,10 +57,10 @@ export function Combobox({
       </PopoverTrigger>
       <PopoverContent style={{ width: "var(--radix-popover-trigger-width)" }} className="p-0">
         <Command>
-          <CommandInput placeholder="Search option..." />
-          <CommandList>
+          <CommandInput placeholder="Search option..." onValueChange={setSearch} />
+          <CommandList ref={listRef}>
             <CommandEmpty>No option found.</CommandEmpty>
-            <CommandGroup className="max-h-[300px] overflow-y-auto">
+            <CommandGroup>
               {options.map((option) => (
                 <CommandItem
                   key={option.value}

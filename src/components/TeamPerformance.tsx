@@ -77,6 +77,7 @@ export function TeamPerformance() {
         score: teamData ? teamData.Overall["Overall (1000)"] : null,
         year: year,
         team_key: teamData ? teamData.Overall.team_key : null,
+        fullData: teamData,
       };
     });
   }, [selectedSchool, allCompetitions]);
@@ -101,61 +102,25 @@ export function TeamPerformance() {
   }
 
   const [isExpanded, setIsExpanded] = useState(false);
+  const [openItems, setOpenItems] = useState<string[]>([]);
+
+  const reversedTeamPerformance = useMemo(() => [...teamPerformance].reverse(), [teamPerformance]);
 
   return (
     <div className="space-y-6">
-      {/* Team Selector */}
+      {/* Performance Chart */}
       <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle>Select Team</CardTitle>
-          <CardDescription>View performance history for any team</CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Performance Over Time</CardTitle>
+            <CardDescription>Score progression for {selectedTeam}</CardDescription>
+          </div>
           <Combobox
             options={teamOptions}
             value={selectedTeam}
             onChange={setSelectedTeam}
-            className="w-full"
+            className="w-[300px]"
           />
-        </CardContent>
-      </Card>
-
-      {/* Team Stats */}
-      <div className="grid gap-6 md:grid-cols-4">
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardDescription>Competitions</CardDescription>
-            <CardTitle className="text-2xl">{teamPerformance.length}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardDescription>Average Score</CardDescription>
-            <CardTitle className="text-2xl">{avgScore.toFixed(1)}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardDescription>Best Score</CardDescription>
-            <CardTitle className="text-2xl">{maxScore.toFixed(1)}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardDescription>Lowest Score</CardDescription>
-            <CardTitle className="text-2xl">{minScore.toFixed(1)}</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-      
-      {/* Performance Chart */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle>Performance Over Time</CardTitle>
-          <CardDescription>Score progression across competitions</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <ChartContainer
@@ -208,42 +173,39 @@ export function TeamPerformance() {
         </CardContent>
       </Card>
 
-      {/* Competition Details */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle>Competition Details</CardTitle>
-          <CardDescription>Complete performance record</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {(isExpanded ? teamPerformance : teamPerformance.slice(0, 10)).map((perf) => (
-              <div
-                key={perf.competition}
-                className="flex items-center justify-between rounded-lg border border-border bg-card/50 px-4 py-3"
-              >
-                <span className="text-sm font-medium">{perf.competition}</span>
-                <span className="text-sm font-mono">{perf.score!.toFixed(2)}</span>
-              </div>
-            ))}
-          </div>
-          {teamPerformance.length > 10 && !isExpanded && (
-            <div className="flex justify-center pt-4">
-              <Button variant="ghost" onClick={() => setIsExpanded(true)} className="cursor-pointer">
-                Show More
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-              </Button>
-            </div>
-          )}
-          {isExpanded && (
-            <div className="flex justify-center pt-4">
-              <Button variant="ghost" onClick={() => setIsExpanded(false)} className="cursor-pointer">
-                Show Less
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Team Stats */}
+      <div className="grid gap-6 md:grid-cols-4">
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardDescription>Competitions</CardDescription>
+            <CardTitle className="text-2xl">{teamPerformance.length}</CardTitle>
+          </CardHeader>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardDescription>Average Score</CardDescription>
+            <CardTitle className="text-2xl">{avgScore.toFixed(1)}</CardTitle>
+          </CardHeader>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardDescription>Best Score</CardDescription>
+            <CardTitle className="text-2xl">{maxScore.toFixed(1)}</CardTitle>
+          </CardHeader>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardDescription>Lowest Score</CardDescription>
+            <CardTitle className="text-2xl">{minScore.toFixed(1)}</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+
+
+
     </div>
   )
 }
