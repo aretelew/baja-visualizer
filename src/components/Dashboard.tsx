@@ -1,73 +1,119 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { BarChart3, LineChart, PieChart, TrendingUp } from "lucide-react"
+import { useState, useEffect } from "react"
 import { MostConsistentPrograms } from "./MostConsistentPrograms"
 import { CompetitionOverview } from "./CompetitionOverview"
 import { TeamPerformance } from "./TeamPerformance"
-import { TrendAnalysis } from "./TrendAnalysis"
+
 import { ComparisonView } from "./ComparisonView"
-import { ThemeToggle } from "./ThemeToggle"
+import { Header } from "./Header"
+import { TeamSelectionCard } from "./TeamSelectionCard"
+import { CompetitionSelectionCard } from "./CompetitionSelectionCard"
+import { Top10Endurance } from "./Top10Endurance"
+import bajaData from "../../baja-data.json";
+
+interface TeamData {
+  Overall: {
+    School: string;
+    team_key: string;
+  };
+}
 
 export function Dashboard() {
+  const [activeView, setActiveView] = useState("overview");
+  const [data, setData] = useState<Record<string, Record<string, TeamData>>>({});
+  const [competitions, setCompetitions] = useState<string[]>([]);
+  const [schools, setSchools] = useState<{ value: string; label: string }[]>([]);
+  const [selectedCompetition, setSelectedCompetition] = useState<string>("");
+  const [selectedSchool, setSelectedSchool] = useState<string>("");
+
+  useEffect(() => {
+    setData(bajaData as Record<string, Record<string, TeamData>>);
+    const allTeams: TeamData[] = Object.values(bajaData).flatMap(comp => Object.values(comp)) as TeamData[];
+    const uniqueSchools = [...new Set(allTeams.map((team) => team.Overall.School))];
+    
+    const schoolList = uniqueSchools.map(schoolName => {
+      const teamForSchool = allTeams.find(team => team.Overall.School === schoolName);
+      return {
+        value: schoolName,
+        label: teamForSchool ? teamForSchool.Overall.team_key : schoolName,
+      };
+    }).sort((a, b) => a.label.localeCompare(b.label));
+
+    setSchools(schoolList);
+    if (schoolList.length > 0) {
+      const initialSchool = "Case Western Reserve University";
+      setSelectedSchool(initialSchool);
+
+      const competitionsForSchool = Object.keys(bajaData).filter(comp => 
+        Object.values(bajaData[comp as keyof typeof bajaData]).some((team: TeamData) => team.Overall.School === initialSchool)
+      );
+      setCompetitions(competitionsForSchool);
+      if (competitionsForSchool.length > 0) {
+        setSelectedCompetition(competitionsForSchool[0]);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedSchool && data) {
+      const competitionsForSchool = Object.keys(data).filter(comp => 
+        Object.values(data[comp as keyof typeof data]).some((team: TeamData) => team.Overall.School === selectedSchool)
+      );
+      setCompetitions(competitionsForSchool);
+
+      if (!competitionsForSchool.includes(selectedCompetition)) {
+        setSelectedCompetition(competitionsForSchool[0]);
+      }
+    }
+  }, [selectedSchool, data, selectedCompetition]);
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded bg-primary">
-                <TrendingUp className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold">Baja SAE Analytics</h1>
-                {/* <p className="text-sm text-muted-foreground">Competition Data 2013-2025</p> */}
-              </div>
-            </div>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      <Header activeView={activeView} setActiveView={setActiveView} />
 
       {/* Main Content */}
-      <main className="container mx-auto  px-6 py-8">
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-card border border-border">
-            <TabsTrigger value="overview" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="teams" className="gap-2">
-              <LineChart className="h-4 w-4" />
-              Team Performance
-            </TabsTrigger>
-            <TabsTrigger value="trends" className="gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Trends
-            </TabsTrigger>
-            <TabsTrigger value="compare" className="gap-2">
-              <PieChart className="h-4 w-4" />
-              Compare
-            </TabsTrigger>
-          </TabsList>
+      <main className="container mx-auto px-6 py-8 space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <TeamSelectionCard 
+            schools={schools}
+            selectedSchool={selectedSchool}
+            setSelectedSchool={setSelectedSchool}
+          />
+          <CompetitionSelectionCard 
+            competitions={competitions}
+            selectedCompetition={selectedCompetition}
+            setSelectedCompetition={setSelectedCompetition}
+          />
+        </div>
 
-          <TabsContent value="overview" className="space-y-6">
-            <CompetitionOverview />
-            <TrendAnalysis />
+
+
+        {activeView === "overview" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <CompetitionOverview selectedCompetition={selectedCompetition} selectedSchool={selectedSchool} />
+              <Top10Endurance selectedCompetition={selectedCompetition} selectedSchool={selectedSchool} />
+            </div>
             <MostConsistentPrograms />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="teams" className="space-y-6">
-            <TeamPerformance />
-          </TabsContent>
+        {activeView === "teams" && (
+          <div className="space-y-6">
+            <TeamPerformance selectedSchool={selectedSchool} selectedCompetition={selectedCompetition} />
+          </div>
+        )}
 
-          <TabsContent value="trends" className="space-y-6">
-            
-          </TabsContent>
+        {activeView === "trends" && (
+          <div className="space-y-6">
+            {/* Add TrendAnalysis content here if needed */}
+          </div>
+        )}
 
-          <TabsContent value="compare" className="space-y-6">
+        {activeView === "compare" && (
+          <div className="space-y-6">
             <ComparisonView />
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </main>
     </div>
   )

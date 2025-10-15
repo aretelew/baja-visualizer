@@ -24,11 +24,17 @@ export function Combobox({
   value,
   onChange,
   className,
+  placeholder = "Select option...",
+  searchPlaceholder = "Search option...",
+  noResultsText = "No option found.",
 }: {
   options: { value: string; label: string }[]
   value: string
   onChange: (value: string) => void
   className?: string
+  placeholder?: string
+  searchPlaceholder?: string
+  noResultsText?: string
 }) {
   const [open, setOpen] = React.useState(false)
   const listRef = React.useRef<HTMLDivElement>(null)
@@ -52,16 +58,16 @@ export function Combobox({
           <span className="truncate">
             {value
               ? options.find((option) => option.value === value)?.label
-              : "Select option..."}
+              : placeholder}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent style={{ width: "var(--radix-popover-trigger-width)" }} className="p-0">
         <Command>
-          <CommandInput placeholder="Search option..." onValueChange={setSearch} />
+          <CommandInput placeholder={searchPlaceholder} onValueChange={setSearch} />
           <CommandList ref={listRef}>
-            <CommandEmpty>No option found.</CommandEmpty>
+            <CommandEmpty>{noResultsText}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem

@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Combobox } from "@/components/ui/combobox"
 import bajaData from "../../baja-data.json"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Line, LineChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts"
@@ -16,58 +15,7 @@ interface Team {
   };
 }
 
-export function TeamPerformance() {
-  const teamOptions = useMemo(() => {
-    const schoolData: { [schoolName: string]: { recentTeamName: string; recentCompetitionYear: number } } = {};
-    const competitionKeys = Object.keys(bajaData).sort();
-
-    for (const competition of competitionKeys) {
-      const competitionYearMatch = competition.match(/\d{4}/);
-      const competitionYear = competitionYearMatch ? parseInt(competitionYearMatch[0]) : 0;
-
-      const competitionData = bajaData[competition as keyof typeof bajaData];
-      for (const team of Object.values(competitionData)) {
-        if (team && team.Overall && team.Overall.School && team.Overall.team_key) {
-          const schoolName = team.Overall.School;
-          const teamName = team.Overall.team_key;
-
-          if (!schoolData[schoolName]) {
-            schoolData[schoolName] = { recentTeamName: '', recentCompetitionYear: 0 };
-          }
-
-          if (competitionYear >= schoolData[schoolName].recentCompetitionYear) {
-            schoolData[schoolName].recentCompetitionYear = competitionYear;
-            schoolData[schoolName].recentTeamName = teamName;
-          }
-        }
-      }
-    }
-
-    return Object.values(schoolData)
-      .map(data => ({
-        value: data.recentTeamName,
-        label: data.recentTeamName,
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, []);
-
-  const [selectedTeam, setSelectedTeam] = useState(() => {
-    const targetTeam = teamOptions.find(option => option.label === "Case Western Reserve University - CWRU Motorsports");
-    return targetTeam ? targetTeam.value : (teamOptions[0]?.value || "");
-  })
-
-  const selectedSchool = useMemo(() => {
-    if (!selectedTeam) return null;
-    for (const competition in bajaData) {
-      const competitionData = bajaData[competition as keyof typeof bajaData];
-      for (const team of Object.values(competitionData)) {
-        if (team && team.Overall && team.Overall.team_key === selectedTeam) {
-          return team.Overall.School;
-        }
-      }
-    }
-    return null;
-  }, [selectedTeam]);
+export function TeamPerformance({ selectedSchool, selectedCompetition: currentCompetition }: { selectedSchool: string, selectedCompetition: string }) { 
 
   const allCompetitions = useMemo(() => {
     return Object.keys(bajaData).reverse();
@@ -94,28 +42,14 @@ export function TeamPerformance() {
   // For team stats, we only consider competitions they participated in.
   const teamPerformance = useMemo(() => chartData.filter(d => d.score !== null), [chartData]);
 
-  const [selectedCompetition, setSelectedCompetition] = useState();
+  const [selectedCompetition, setSelectedCompetition] = useState<{ competition: string; score: number | null; year: string | null; team_key: string | null; fullData: Team | { Overall: { School: string; team_key: string; "Overall (1000)": number; }; }; } | undefined>();
 
   useEffect(() => {
-    if (teamPerformance.length > 0) {
-      setSelectedCompetition(teamPerformance[teamPerformance.length - 1]);
+    if (currentCompetition) {
+        const comp = teamPerformance.find(p => p.competition === currentCompetition);
+        setSelectedCompetition(comp);
     }
-  }, [teamPerformance]);
-
-  const competitionOptions = useMemo(() => {
-    if (!teamPerformance) return [];
-    return [...teamPerformance].reverse().map(p => ({
-      value: p.competition,
-      label: p.competition,
-    }));
-  }, [teamPerformance]);
-
-  const handleCompetitionChange = (competitionName: string) => {
-    const newSelectedCompetition = teamPerformance.find(p => p.competition === competitionName);
-    if (newSelectedCompetition) {
-      setSelectedCompetition(newSelectedCompetition);
-    }
-  };
+  }, [currentCompetition, teamPerformance]);
 
   // Calculate team statistics from filtered data
   const scores = teamPerformance.map((p) => p.score) as number[]
@@ -133,33 +67,16 @@ export function TeamPerformance() {
     }
   }
 
+
+
   return (
     <div className="space-y-6">
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <div className="flex flex-col lg:flex-row lg:items-center gap-6">
-            <div className="flex-1">
-              <CardTitle>Team Analytics Dashboard</CardTitle>
-              <CardDescription>
-                Select a team to view detailed performance metrics
-              </CardDescription>
-            </div>
-            <Combobox
-              options={teamOptions}
-              value={selectedTeam}
-              onChange={setSelectedTeam}
-              className="w-[400px]"
-            />
-          </div>
-        </CardHeader>
-      </Card>
-
       {/* Performance Chart */}
       <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Performance Over Time</CardTitle>
-            <CardDescription>Score progression for {selectedTeam}</CardDescription>
+            <CardDescription>Score progression for {selectedSchool}</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -168,7 +85,7 @@ export function TeamPerformance() {
             className="h-[400px] w-full px-4"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={teamPerformance} onClick={(e) => e && e.activePayload && e.activePayload[0] && setSelectedCompetition(e.activePayload[0].payload)}>
+              <LineChart data={teamPerformance}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis 
                   dataKey="competition" 
@@ -246,12 +163,6 @@ export function TeamPerformance() {
             <h2 className="text-2xl font-semibold leading-none tracking-tight text-white">Event Scores</h2>
             <p className="text-sm text-muted-foreground pt-2">Scores for {selectedCompetition?.competition}</p>
           </div>
-          <Combobox
-            options={competitionOptions}
-            value={selectedCompetition?.competition || ""}
-            onChange={handleCompetitionChange}
-            className="w-[300px]"
-          />
         </div>
         <div className="mt-4 grid grid-cols-2 gap-6">
           {selectedCompetition?.fullData?.Overall && <BajaRadarChart overallData={selectedCompetition.fullData.Overall} />}

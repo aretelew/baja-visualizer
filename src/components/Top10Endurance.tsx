@@ -17,7 +17,7 @@ import { Cell } from 'recharts';
 
 interface TeamData {
   'Canonical_Team': string;
-  'Overall (1000)': number;
+  'Endurance (400)': number;
   'team_key': string;
   'school': string;
 }
@@ -26,13 +26,15 @@ interface RawTeam {
   Overall: {
     School: string;
     team_key: string;
-    'Overall (1000)': number;
+  };
+  Endurance: {
+    'Points (400)': number;
   };
 }
 
 const chartConfig = {
-  Overall: {
-    label: 'Overall Score',
+  Endurance: {
+    label: 'Endurance Score',
     color: 'var(--chart-1)',
   },
 };
@@ -43,26 +45,26 @@ const CustomBarLabel = (props: { x: number; y: number; height: number; data: Tea
   return <text x={x + 10} y={y + height / 2} fill="#fff" textAnchor="start" dominantBaseline="middle">{entry.Canonical_Team}</text>;
 };
 
-export function CompetitionOverview({ selectedCompetition, selectedSchool }: { selectedCompetition: string, selectedSchool: string }) {
+export function Top10Endurance({ selectedCompetition, selectedSchool }: { selectedCompetition: string, selectedSchool: string }) {
   const [chartData, setChartData] = useState<TeamData[]>([]);
 
   useEffect(() => {
     if (selectedCompetition) {
       const competitionData = bajaData[selectedCompetition as keyof typeof bajaData];
       const top10 = Object.values(competitionData)
-        .filter((team: RawTeam) => team && team.Overall)
+        .filter((team: RawTeam) => team && team.Endurance)
         .map((team: RawTeam) => {
           const school = team.Overall.School;
           const team_key = team.Overall.team_key;
           const teamName = team_key.replace(school + ' - ', '');
           return {
             'Canonical_Team': teamName,
-            'Overall (1000)': team.Overall['Overall (1000)'],
+            'Endurance (400)': team.Endurance['Points (400)'],
             'team_key': team_key,
             'school': school,
           }
         })
-        .sort((a, b) => b['Overall (1000)'] - a['Overall (1000)'])
+        .sort((a, b) => b['Endurance (400)'] - a['Endurance (400)'])
         .slice(0, 10);
       setChartData(top10 as TeamData[]);
     }
@@ -72,7 +74,7 @@ export function CompetitionOverview({ selectedCompetition, selectedSchool }: { s
     <Card>
       <CardHeader className="flex justify-between items-center">
         <div>
-          <CardTitle>Top 10 Teams</CardTitle>
+          <CardTitle>Top 10 Endurance</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
@@ -87,7 +89,7 @@ export function CompetitionOverview({ selectedCompetition, selectedSchool }: { s
               axisLine={false}
               width={0}
             />
-            <XAxis dataKey="Overall (1000)" type="number" />
+            <XAxis dataKey="Endurance (400)" type="number" domain={[0, 400]} />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent
@@ -105,7 +107,7 @@ export function CompetitionOverview({ selectedCompetition, selectedSchool }: { s
                 }}
               />}
             />
-            <Bar dataKey="Overall (1000)" radius={4} label={<CustomBarLabel data={chartData} />}>
+            <Bar dataKey="Endurance (400)" radius={4} label={<CustomBarLabel data={chartData} />}>
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={'var(--chart-1)'} stroke={entry.school === selectedSchool ? 'var(--selected-border-color)' : 'transparent'} strokeWidth={2} />
               ))}
