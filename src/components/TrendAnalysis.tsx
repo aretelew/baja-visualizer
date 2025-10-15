@@ -14,6 +14,25 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 
+interface RawTeam {
+  Overall: {
+    team_key: string;
+    "Overall (1000)": number;
+  };
+}
+
+interface ChartDataRow {
+  competition: string;
+  [teamName: string]: string | number | null;
+}
+
+interface ChartConfig {
+  [teamName: string]: {
+    label: string;
+    color: string;
+  };
+}
+
 const chartColors = [
   'var(--chart-1)',
   'var(--chart-2)',
@@ -28,21 +47,21 @@ const chartColors = [
 ];
 
 export function TrendAnalysis() {
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<ChartDataRow[]>([]);
   const [topTeams, setTopTeams] = useState<string[]>([]);
-  const [chartConfig, setChartConfig] = useState<any>({});
+  const [chartConfig, setChartConfig] = useState<ChartConfig>({});
 
   useEffect(() => {
     fetch('/baja-data.json')
       .then(response => response.json())
       .then(jsonData => {
-        const stats: { [key: string]: { scores: number[]; count: number } } = {};
+                const stats: { [key: string]: { scores: number[]; count: number } } = {};
 
         for (const competition in jsonData) {
           for (const team of Object.values(jsonData[competition as keyof typeof jsonData])) {
-            if (team && team.Overall && team.Overall.team_key) {
-              const teamName = team.Overall.team_key;
-              const score = team.Overall['Overall (1000)'];
+            if ((team as RawTeam) && (team as RawTeam).Overall && (team as RawTeam).Overall.team_key) {
+              const teamName = (team as RawTeam).Overall.team_key;
+              const score = (team as RawTeam).Overall['Overall (1000)'];
 
               if (typeof score === 'number') {
                 if (!stats[teamName]) {
@@ -75,17 +94,17 @@ export function TrendAnalysis() {
         });
 
         const newChartData = competitionNames.map(competition => {
-          const competitionData: any = { competition };
+          const competitionData: ChartDataRow = { competition };
           for (const teamName of top10Teams) {
-            const teamData = Object.values(jsonData[competition as keyof typeof jsonData]).find((t: any) => t.Overall && t.Overall.team_key === teamName);
-            competitionData[teamName] = teamData ? teamData.Overall['Overall (1000)'] : null;
+            const teamData = Object.values(jsonData[competition as keyof typeof jsonData]).find((t) => (t as RawTeam).Overall && (t as RawTeam).Overall.team_key === teamName);
+            competitionData[teamName] = teamData ? (teamData as RawTeam).Overall['Overall (1000)'] : null;
           }
           return competitionData;
         });
 
         setChartData(newChartData);
 
-        const newChartConfig: any = {};
+        const newChartConfig: ChartConfig = {};
         top10Teams.forEach((teamName, index) => {
           newChartConfig[teamName] = {
             label: teamName,

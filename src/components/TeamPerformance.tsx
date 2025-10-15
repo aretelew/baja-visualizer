@@ -1,12 +1,20 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox } from "@/components/ui/combobox"
-import { Button } from "@/components/ui/button"
 import bajaData from "../../baja-data.json"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Line, LineChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import { BajaRadarChart } from "./BajaRadarChart"
+
+interface Team {
+  Overall: {
+    School: string;
+    team_key: string;
+    "Overall (1000)": number;
+  };
+}
 
 export function TeamPerformance() {
   const teamOptions = useMemo(() => {
@@ -61,15 +69,16 @@ export function TeamPerformance() {
     return null;
   }, [selectedTeam]);
 
-  // Chronological list of all competitions
-  const allCompetitions = useMemo(() => Object.keys(bajaData).reverse(), []);
+  const allCompetitions = useMemo(() => {
+    return Object.keys(bajaData).reverse();
+  }, []);
 
   // Get performance data for the selected team across all competitions
   const chartData = useMemo(() => {
     if (!selectedSchool) return [];
     return allCompetitions.map(comp => {
       const teams = bajaData[comp as keyof typeof bajaData];
-      const teamData = Object.values(teams).find((t: any) => t.Overall && t.Overall.School === selectedSchool);
+      const teamData = Object.values(teams).find((t: Team) => t.Overall && t.Overall.School === selectedSchool);
       const yearMatch = comp.match(/\d{4}/);
       const year = yearMatch ? yearMatch[0] : null;
       return {
@@ -83,7 +92,30 @@ export function TeamPerformance() {
   }, [selectedSchool, allCompetitions]);
 
   // For team stats, we only consider competitions they participated in.
-  const teamPerformance = chartData.filter(d => d.score !== null);
+  const teamPerformance = useMemo(() => chartData.filter(d => d.score !== null), [chartData]);
+
+  const [selectedCompetition, setSelectedCompetition] = useState();
+
+  useEffect(() => {
+    if (teamPerformance.length > 0) {
+      setSelectedCompetition(teamPerformance[teamPerformance.length - 1]);
+    }
+  }, [teamPerformance]);
+
+  const competitionOptions = useMemo(() => {
+    if (!teamPerformance) return [];
+    return [...teamPerformance].reverse().map(p => ({
+      value: p.competition,
+      label: p.competition,
+    }));
+  }, [teamPerformance]);
+
+  const handleCompetitionChange = (competitionName: string) => {
+    const newSelectedCompetition = teamPerformance.find(p => p.competition === competitionName);
+    if (newSelectedCompetition) {
+      setSelectedCompetition(newSelectedCompetition);
+    }
+  };
 
   // Calculate team statistics from filtered data
   const scores = teamPerformance.map((p) => p.score) as number[]
@@ -101,13 +133,27 @@ export function TeamPerformance() {
     }
   }
 
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [openItems, setOpenItems] = useState<string[]>([]);
-
-  const reversedTeamPerformance = useMemo(() => [...teamPerformance].reverse(), [teamPerformance]);
-
   return (
     <div className="space-y-6">
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+            <div className="flex-1">
+              <CardTitle>Team Analytics Dashboard</CardTitle>
+              <CardDescription>
+                Select a team to view detailed performance metrics
+              </CardDescription>
+            </div>
+            <Combobox
+              options={teamOptions}
+              value={selectedTeam}
+              onChange={setSelectedTeam}
+              className="w-[400px]"
+            />
+          </div>
+        </CardHeader>
+      </Card>
+
       {/* Performance Chart */}
       <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -115,25 +161,14 @@ export function TeamPerformance() {
             <CardTitle>Performance Over Time</CardTitle>
             <CardDescription>Score progression for {selectedTeam}</CardDescription>
           </div>
-          <Combobox
-            options={teamOptions}
-            value={selectedTeam}
-            onChange={setSelectedTeam}
-            className="w-[300px]"
-          />
         </CardHeader>
         <CardContent className="p-0">
           <ChartContainer
-            config={{
-              score: {
-                label: "Score",
-                color: "var(--chart-1)",
-              },
-            }}
+            config={{}}
             className="h-[400px] w-full px-4"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={teamPerformance}>
+              <LineChart data={teamPerformance} onClick={(e) => e && e.activePayload && e.activePayload[0] && setSelectedCompetition(e.activePayload[0].payload)}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis 
                   dataKey="competition" 
@@ -204,8 +239,25 @@ export function TeamPerformance() {
         </Card>
       </div>
 
-
-
+      {/* Radar Chart */}
+      <div className="pt-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-semibold leading-none tracking-tight text-white">Event Scores</h2>
+            <p className="text-sm text-muted-foreground pt-2">Scores for {selectedCompetition?.competition}</p>
+          </div>
+          <Combobox
+            options={competitionOptions}
+            value={selectedCompetition?.competition || ""}
+            onChange={handleCompetitionChange}
+            className="w-[300px]"
+          />
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-6">
+          {selectedCompetition?.fullData?.Overall && <BajaRadarChart overallData={selectedCompetition.fullData.Overall} />}
+          <Card className="bg-card border-border" />
+        </div>
+      </div>
     </div>
   )
 }

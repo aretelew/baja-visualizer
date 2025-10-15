@@ -47,11 +47,13 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-[200px] justify-between h-auto whitespace-normal", className)}
+          className={cn("w-[200px] justify-between", className)}
         >
-          {value
-            ? options.find((option) => option.value === value)?.label
-            : "Select option..."}
+          <span className="truncate">
+            {value
+              ? options.find((option) => option.value === value)?.label
+              : "Select option..."}
+          </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

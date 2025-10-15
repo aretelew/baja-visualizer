@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
@@ -25,6 +23,13 @@ import {
 } from "@/components/ui/select"
 import bajaData from "../../baja-data.json"
 
+interface Team {
+  Overall: {
+    School: string;
+    "Overall (1000)": number;
+  };
+}
+
 const chartConfig = {
   points: {
     label: "Points",
@@ -40,9 +45,9 @@ export function BajaChart() {
   const chartData = React.useMemo(() => {
     const competitionData = bajaData[activeCompetition as keyof typeof bajaData];
     if (!competitionData) return [];
-    return Object.values(competitionData)
-      .filter((team: any) => team && team.Overall)
-      .map((team: any) => ({
+    return (Object.values(competitionData) as Team[])
+      .filter((team: Team) => team && team.Overall)
+      .map((team: Team) => ({
         team: team.Overall.School,
         points: team.Overall["Overall (1000)"],
       }))

@@ -3,7 +3,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -21,15 +20,23 @@ interface TeamData {
   'school': string;
 }
 
+interface RawTeam {
+  Overall: {
+    School: string;
+    team_key: string;
+    'Overall (1000)': number;
+  };
+}
+
 const chartConfig = {
   Overall: {
     label: 'Overall Score',
-    color: 'var(--primary)',
+    color: 'var(--chart-1)',
   },
 };
 
 export function CompetitionOverview() {
-  const [allData, setAllData] = useState<any>(null);
+  const [allData, setAllData] = useState<{[key: string]: {[key: string]: RawTeam}} | null>(null);
   const [competitions, setCompetitions] = useState<{ value: string; label: string }[]>([]);
   const [selectedCompetition, setSelectedCompetition] = useState<string>("");
   const [chartData, setChartData] = useState<TeamData[]>([]);
@@ -49,8 +56,8 @@ export function CompetitionOverview() {
     if (allData && selectedCompetition) {
       const competitionData = allData[selectedCompetition];
       const top10 = Object.values(competitionData)
-        .filter((team: any) => team && team.Overall)
-        .map((team: any) => {
+        .filter((team: RawTeam) => team && team.Overall)
+        .map((team: RawTeam) => {
           const school = team.Overall.School;
           const team_key = team.Overall.team_key;
           const teamName = team_key.replace(school + ' - ', '');
