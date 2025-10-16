@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import bajaData from '../../baja-data.json';
 import {
   Card,
@@ -21,12 +22,15 @@ interface TeamStats {
   averageScore: number;
   bestScore: number;
   competitionCount: number;
+  totalPoints: number;
 }
 
 export function MostConsistentPrograms() {
   const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
+  const [sortColumn, setSortColumn] = useState<keyof TeamStats>('totalPoints');
+  const [sortDirection, setSortDirection] = useState('desc');
 
-  useEffect(() => {
+  const sortedTeamStats = useMemo(() => {
     const jsonData = bajaData;
     const stats: { [key: string]: { scores: number[]; count: number; best: number; recentTeamName: string; recentCompetitionYear: number; } } = {};
 
@@ -65,23 +69,38 @@ export function MostConsistentPrograms() {
 
     const calculatedStats: TeamStats[] = Object.keys(stats).map(schoolName => {
       const schoolData = stats[schoolName];
-      const averageScore = schoolData.scores.reduce((a, b) => a + b, 0) / schoolData.count;
+      const totalPoints = schoolData.scores.reduce((a, b) => a + b, 0);
+      const averageScore = totalPoints / schoolData.count;
       return {
         schoolName: schoolName,
         teamName: schoolData.recentTeamName,
         averageScore: parseFloat(averageScore.toFixed(2)),
         bestScore: schoolData.best,
         competitionCount: schoolData.count,
+        totalPoints: parseFloat(totalPoints.toFixed(2)),
       };
     });
 
-    const top20 = calculatedStats
+    const sorted = calculatedStats
       .filter(team => team.competitionCount >= 3)
-      .sort((a, b) => b.averageScore - a.averageScore)
-      .slice(0, 20);
+      .sort((a, b) => {
+        if (sortDirection === 'asc') {
+          return a[sortColumn] > b[sortColumn] ? 1 : -1;
+        }
+        return b[sortColumn] > a[sortColumn] ? 1 : -1;
+      });
 
-    setTeamStats(top20);
-  }, []);
+    return sorted.slice(0, 20);
+  }, [sortColumn, sortDirection]);
+
+  const handleSort = (column: keyof TeamStats) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
 
   return (
     <Card>
@@ -89,21 +108,23 @@ export function MostConsistentPrograms() {
         <CardTitle>Most Consistent Programs</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
+        <Table style={{tableLayout: 'fixed'}}>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-left font-bold">Team</TableHead>
-              <TableHead className="text-left font-bold">Average Score</TableHead>
-              <TableHead className="text-left font-bold">Best Score</TableHead>
-              <TableHead className="text-left font-bold">Competitions</TableHead>
+              <TableHead className="text-left font-bold" style={{width: '40%'}}><span className="cursor-pointer" onClick={() => handleSort('teamName')}>Team <span style={{color: sortColumn === 'teamName' ? 'white' : 'transparent'}}>{sortDirection === 'asc' ? <ChevronUp className="inline-block w-4 h-4" /> : <ChevronDown className="inline-block w-4 h-4" />}</span></span></TableHead>
+              <TableHead className="text-left font-bold" style={{width: '15%'}}><span className="cursor-pointer" onClick={() => handleSort('averageScore')}>Average Score <span style={{color: sortColumn === 'averageScore' ? 'white' : 'transparent'}}>{sortDirection === 'asc' ? <ChevronUp className="inline-block w-4 h-4" /> : <ChevronDown className="inline-block w-4 h-4" />}</span></span></TableHead>
+              <TableHead className="text-left font-bold" style={{width: '15%'}}><span className="cursor-pointer" onClick={() => handleSort('bestScore')}>Best Score <span style={{color: sortColumn === 'bestScore' ? 'white' : 'transparent'}}>{sortDirection === 'asc' ? <ChevronUp className="inline-block w-4 h-4" /> : <ChevronDown className="inline-block w-4 h-4" />}</span></span></TableHead>
+              <TableHead className="text-left font-bold" style={{width: '15%'}}><span className="cursor-pointer" onClick={() => handleSort('totalPoints')}>Total Points <span style={{color: sortColumn === 'totalPoints' ? 'white' : 'transparent'}}>{sortDirection === 'asc' ? <ChevronUp className="inline-block w-4 h-4" /> : <ChevronDown className="inline-block w-4 h-4" />}</span></span></TableHead>
+              <TableHead className="text-left font-bold" style={{width: '15%'}}><span className="cursor-pointer" onClick={() => handleSort('competitionCount')}>Competitions <span style={{color: sortColumn === 'competitionCount' ? 'white' : 'transparent'}}>{sortDirection === 'asc' ? <ChevronUp className="inline-block w-4 h-4" /> : <ChevronDown className="inline-block w-4 h-4" />}</span></span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {teamStats.map(team => (
+            {sortedTeamStats.map(team => (
               <TableRow key={team.schoolName}>
                 <TableCell className="text-left">{team.teamName}</TableCell>
                 <TableCell className="text-left">{team.averageScore}</TableCell>
                 <TableCell className="text-left">{team.bestScore}</TableCell>
+                <TableCell className="text-left">{team.totalPoints}</TableCell>
                 <TableCell className="text-left">{team.competitionCount}</TableCell>
               </TableRow>
             ))}

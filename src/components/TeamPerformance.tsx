@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import bajaData from "../../baja-data.json"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Line, LineChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts"
-import { BajaRadarChart } from "./BajaRadarChart"
+import { BajaDynamicRadarChart } from "./BajaDynamicRadarChart"
+import { BajaStaticRadarChart } from "./BajaStaticRadarChart"
 
 interface Team {
   Overall: {
@@ -31,7 +32,7 @@ export function TeamPerformance({ selectedSchool, selectedCompetition: currentCo
       const year = yearMatch ? yearMatch[0] : null;
       return {
         competition: comp,
-        score: teamData ? teamData.Overall["Overall (1000)"] : null,
+        score: teamData ? teamData.Overall["Overall (1000)"] : 0,
         year: year,
         team_key: teamData ? teamData.Overall.team_key : null,
         fullData: teamData,
@@ -40,26 +41,26 @@ export function TeamPerformance({ selectedSchool, selectedCompetition: currentCo
   }, [selectedSchool, allCompetitions]);
 
   // For team stats, we only consider competitions they participated in.
-  const teamPerformance = useMemo(() => chartData.filter(d => d.score !== null), [chartData]);
+  const teamPerformanceStats = useMemo(() => chartData.filter(d => d.score !== 0), [chartData]);
 
   const [selectedCompetition, setSelectedCompetition] = useState<{ competition: string; score: number | null; year: string | null; team_key: string | null; fullData: Team | { Overall: { School: string; team_key: string; "Overall (1000)": number; }; }; } | undefined>();
 
   useEffect(() => {
     if (currentCompetition) {
-        const comp = teamPerformance.find(p => p.competition === currentCompetition);
+        const comp = teamPerformanceStats.find(p => p.competition === currentCompetition);
         setSelectedCompetition(comp);
     }
-  }, [currentCompetition, teamPerformance]);
+  }, [currentCompetition, teamPerformanceStats]);
 
   // Calculate team statistics from filtered data
-  const scores = teamPerformance.map((p) => p.score) as number[]
+  const scores = teamPerformanceStats.map((p) => p.score) as number[]
   const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
   const maxScore = scores.length > 0 ? Math.max(...scores) : 0
   const minScore = scores.length > 0 ? Math.min(...scores) : 0
 
   const yearTicks = [];
   const displayedYears = new Set();
-  for (const d of teamPerformance) {
+  for (const d of chartData) {
     const year = d.year;
     if (year && !displayedYears.has(year)) {
       yearTicks.push(d.competition);
@@ -85,7 +86,7 @@ export function TeamPerformance({ selectedSchool, selectedCompetition: currentCo
             className="h-[400px] w-full px-4"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={teamPerformance}>
+              <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis 
                   dataKey="competition" 
@@ -130,7 +131,7 @@ export function TeamPerformance({ selectedSchool, selectedCompetition: currentCo
         <Card className="bg-card border-border">
           <CardHeader>
             <CardDescription>Competitions</CardDescription>
-            <CardTitle className="text-2xl">{teamPerformance.length}</CardTitle>
+            <CardTitle className="text-2xl">{teamPerformanceStats.length}</CardTitle>
           </CardHeader>
         </Card>
 
@@ -165,8 +166,15 @@ export function TeamPerformance({ selectedSchool, selectedCompetition: currentCo
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-6">
-          {selectedCompetition?.fullData?.Overall && <BajaRadarChart overallData={selectedCompetition.fullData.Overall} />}
-          <Card className="bg-card border-border" />
+          <div>
+            {selectedCompetition?.fullData?.Overall && <BajaDynamicRadarChart overallData={selectedCompetition.fullData.Overall} />}
+          </div>
+          <div>
+            {selectedCompetition?.fullData?.Overall && <BajaStaticRadarChart overallData={selectedCompetition.fullData.Overall} />}
+          </div>
+        </div>
+        <div className="text-muted-foreground text-center pt-4">
+          Scores are normalized to a 0-100 scale for comparison.
         </div>
       </div>
     </div>

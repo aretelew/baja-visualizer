@@ -43,27 +43,18 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function BajaRadarChart({ overallData }: BajaRadarChartProps) {
-          const excludedKeys = [
-    "School",
-    "Rank",
-    "Overall (1000)",
-    "Overall Dynamic (300)",
-    "Overall Static (300)",
+export function BajaStaticRadarChart({ overallData }: BajaRadarChartProps) {
+          const includedKeys = [
     "Cost Event (100)",
     "Design (150)",
     "Business Presentation (50)",
-    "team_key",
-    "Registered",
-    "Passed Tech",
-    "Passed Tech On Time",
-    "Public Comments",
-    "Adjustments",
-    "Sales Presentation (50)",
+    "Cost (100)",
+    "Presentation (50)",
+    "Design (200)"
   ];
 
   const chartData = Object.keys(overallData)
-    .filter(key => !excludedKeys.includes(key) && key.includes(" ("))
+    .filter(key => includedKeys.includes(key) && key.includes(" ("))
     .map(key => {
       const eventName = key.substring(0, key.indexOf(" (")).replace(" & Traction", "");
       const maxScoreMatch = key.match(/\((\d+)\)/);
@@ -85,10 +76,7 @@ export function BajaRadarChart({ overallData }: BajaRadarChartProps) {
   return (
     <Card>
       <CardHeader className="items-center pb-4">
-        <CardTitle>{overallData.School}</CardTitle>
-        <CardDescription>
-          Normalized Event Score Breakdown (Rank: {overallData.Rank})
-        </CardDescription>
+        <CardTitle>Static Events</CardTitle>
       </CardHeader>
       <CardContent className="pb-0">
         <ChartContainer
@@ -107,11 +95,6 @@ export function BajaRadarChart({ overallData }: BajaRadarChartProps) {
           </RadarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="text-muted-foreground">
-          Scores are normalized to a 0-100 scale for comparison.
-        </div>
-      </CardFooter>
     </Card>
   )
 }
