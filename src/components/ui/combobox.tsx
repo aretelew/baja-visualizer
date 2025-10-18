@@ -27,6 +27,11 @@ export function Combobox({
   placeholder = "Select option...",
   searchPlaceholder = "Search option...",
   noResultsText = "No option found.",
+  // Performance-related options
+  maxItemsToRender = 150,
+  largeListThreshold = 500,
+  minSearchChars = 2,
+  truncateLabel = true,
 }: {
   options: { value: string; label: string }[]
   value: string
@@ -35,6 +40,14 @@ export function Combobox({
   placeholder?: string
   searchPlaceholder?: string
   noResultsText?: string
+  /** Maximum number of items to mount in the list to avoid large DOM trees */
+  maxItemsToRender?: number
+  /** If options length exceeds this, require at least minSearchChars before listing */
+  largeListThreshold?: number
+  /** For very large lists, require this many characters before showing results */
+  minSearchChars?: number
+  /** Control whether the selected label is truncated with ellipsis */
+  truncateLabel?: boolean
 }) {
   const [open, setOpen] = React.useState(false)
   const listRef = React.useRef<HTMLDivElement>(null)
@@ -46,6 +59,19 @@ export function Combobox({
     }
   }, [search])
 
+  // Pre-filter on the client to both speed up rendering and reduce DOM size.
+  const needsSearchGate = options.length >= largeListThreshold && search.length < minSearchChars
+  const filtered = React.useMemo(() => {
+    if (needsSearchGate) return [] as { value: string; label: string }[]
+    if (!search) return options
+    const q = search.toLowerCase()
+    return options.filter((o) =>
+      o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q)
+    )
+  }, [options, search, needsSearchGate])
+
+  const limited = React.useMemo(() => filtered.slice(0, maxItemsToRender), [filtered, maxItemsToRender])
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -55,6 +81,7 @@ export function Combobox({
           aria-expanded={open}
           className={cn("w-[200px] justify-between", className)}
         >
+          {/* <span className={cn(truncateLabel ? "truncate" : "whitespace-normal break-words text-left")}> */}
           <span className="truncate">
             {value
               ? options.find((option) => option.value === value)?.label
@@ -67,11 +94,16 @@ export function Combobox({
         <Command>
           <CommandInput placeholder={searchPlaceholder} onValueChange={setSearch} />
           <CommandList ref={listRef}>
-            <CommandEmpty>{noResultsText}</CommandEmpty>
+            <CommandEmpty>
+              {needsSearchGate
+                ? `Type at least ${minSearchChars} characters to search ${options.length} options...`
+                : noResultsText}
+            </CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
+              {limited.map((option) => (
                 <CommandItem
                   key={option.value}
+                  value={option.label}
                   onSelect={() => {
                     onChange(option.value === value ? "" : option.value)
                     setOpen(false)

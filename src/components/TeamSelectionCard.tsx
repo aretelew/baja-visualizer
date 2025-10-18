@@ -5,12 +5,15 @@ interface TeamSelectionCardProps {
   schools: { value: string; label: string }[];
   selectedSchool: string;
   setSelectedSchool: (school: string) => void;
+  /** Optional compare page UI: small team badge/icon at left */
+  showSelectedBadge?: boolean;
 }
 
 export function TeamSelectionCard({ 
   schools, 
   selectedSchool, 
-  setSelectedSchool 
+  setSelectedSchool,
+  showSelectedBadge = false,
 }: TeamSelectionCardProps) {
   return (
     <Card>
@@ -19,16 +22,35 @@ export function TeamSelectionCard({
         <CardDescription>Select a team to view analytics.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Combobox
-          options={schools}
-          value={selectedSchool}
-          onChange={setSelectedSchool}
-          placeholder="Select School"
-          searchPlaceholder="Search schools..."
-          noResultsText="No schools found."
-          className="w-full"
-        />
+        <div className="flex items-center gap-3">
+          {showSelectedBadge && selectedSchool && (
+            <span
+              className="h-4 w-4 rounded-full shrink-0"
+              style={{ backgroundColor: stringToColor(selectedSchool) }}
+            />
+          )}
+          <Combobox
+            options={schools}
+            value={selectedSchool}
+            onChange={setSelectedSchool}
+            placeholder="Select School"
+            searchPlaceholder="Search schools..."
+            noResultsText="No schools found."
+            className="w-full"
+          />
+        </div>
       </CardContent>
     </Card>
   )
+}
+
+// Simple deterministic color generator based on school string
+function stringToColor(input: string): string {
+  let hash = 0
+  for (let i = 0; i < input.length; i++) {
+    hash = input.charCodeAt(i) + ((hash << 5) - hash)
+    hash |= 0
+  }
+  const hue = Math.abs(hash) % 360
+  return `hsl(${hue} 70% 50%)`
 }

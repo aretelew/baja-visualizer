@@ -72,18 +72,20 @@ export function Dashboard() {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <TeamSelectionCard 
-            schools={schools}
-            selectedSchool={selectedSchool}
-            setSelectedSchool={setSelectedSchool}
-          />
-          <CompetitionSelectionCard 
-            competitions={competitions}
-            selectedCompetition={selectedCompetition}
-            setSelectedCompetition={setSelectedCompetition}
-          />
-        </div>
+        {activeView !== "compare" && (
+          <div className="grid grid-cols-2 gap-4">
+            <TeamSelectionCard 
+              schools={schools}
+              selectedSchool={selectedSchool}
+              setSelectedSchool={setSelectedSchool}
+            />
+            <CompetitionSelectionCard 
+              competitions={competitions}
+              selectedCompetition={selectedCompetition}
+              setSelectedCompetition={setSelectedCompetition}
+            />
+          </div>
+        )}
 
 
 
@@ -110,9 +112,13 @@ export function Dashboard() {
         )}
 
         {activeView === "compare" && (
-          <div className="space-y-6">
-            <ComparisonView />
-          </div>
+          <ComparisonView 
+            schools={schools}
+            selectedCompetition={selectedCompetition}
+            setSelectedCompetition={setSelectedCompetition}
+            selectedSchool={selectedSchool}
+            setSelectedSchool={setSelectedSchool}
+          />
         )}
       </main>
     </div>

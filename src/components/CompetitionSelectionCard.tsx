@@ -5,18 +5,23 @@ interface CompetitionSelectionCardProps {
   competitions: string[];
   selectedCompetition: string;
   setSelectedCompetition: (competition: string) => void;
+  /** Optional overrides used on the compare page only */
+  title?: string;
+  description?: string;
 }
 
 export function CompetitionSelectionCard({ 
   competitions, 
   selectedCompetition, 
-  setSelectedCompetition 
+  setSelectedCompetition,
+  title,
+  description,
 }: CompetitionSelectionCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Competition Selection</CardTitle>
-        <CardDescription>Select a competition to view analytics.</CardDescription>
+        <CardTitle>{title ?? "Competition Selection"}</CardTitle>
+        <CardDescription>{description ?? "Select a competition to view analytics."}</CardDescription>
       </CardHeader>
       <CardContent>
         <Combobox
