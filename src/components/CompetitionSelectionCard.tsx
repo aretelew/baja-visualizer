@@ -26,11 +26,12 @@ export function CompetitionSelectionCard({
       <CardContent>
         <Combobox
           options={competitions.map(comp => ({ value: comp, label: comp }))}
-          value={selectedCompetition}
-          onChange={setSelectedCompetition}
+          value={selectedCompetition ? [selectedCompetition] : []}
+          onChange={(value) => setSelectedCompetition(value[value.length - 1] ?? "")}
           placeholder="Select Competition"
           searchPlaceholder="Search competitions..."
           noResultsText="No competitions found."
+          maxSelections={1}
         />
       </CardContent>
     </Card>

@@ -1,3 +1,4 @@
+import { CategoryPerformanceComparison } from "./CategoryPerformanceComparison";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox } from "@/components/ui/combobox"
 import bajaData from "../../baja-data.json"
@@ -50,32 +51,31 @@ export function ComparisonView({
           <CardAction>
              <Combobox
               options={options}
-              value={currentValue}
-              onChange={(token) => {
-                const parsed = parseToken(token)
-                if (!parsed) return
-                setSelectedCompetition(parsed.competition)
-                setSelectedSchool(parsed.school)
+              value={selectedTeams.map(t => t.token)}
+              onChange={(tokens) => {
+                const newSelectedTeams = tokens.map(token => {
+                  const existing = selectedTeams.find(t => t.token === token);
+                  if (existing) return existing;
 
-                setSelectedTeams((prev) => {
-                   if (prev.some((p) => p.token === token)) return prev
-                   if (prev.length >= 6) return prev
-                  return [
-                    ...prev,
-                    {
-                      token: token!,
-                      competition: parsed.competition,
-                      school: parsed.school,
-                      teamKey: parsed.teamKey,
-                    },
-                  ]
-                })
+                  const parsed = parseToken(token);
+                  if (!parsed) return null;
+
+                  return {
+                    token: token!,
+                    competition: parsed.competition,
+                    school: parsed.school,
+                    teamKey: parsed.teamKey,
+                  };
+                }).filter(Boolean) as { token: string; competition: string; school: string; teamKey: string }[];
+
+                setSelectedTeams(newSelectedTeams);
               }}
               placeholder="Select team and competition"
               searchPlaceholder="Search by team, school, or competition..."
               noResultsText="No matches found."
                className="w-[640px] max-w-full"
                truncateLabel={true}
+               maxSelections={6}
             />
           </CardAction>
         </CardHeader>
@@ -89,7 +89,7 @@ export function ComparisonView({
                   key={item.token}
                   teamName={extractTeamName(item.teamKey)}
                   teamSubName={`${item.school} - ${item.competition}`}
-                  color={stringToColor(item.token)}
+                  color={`hsl(${stringToColor(item.token)})`}
                   onRemove={() =>
                     setSelectedTeams((prev) => prev.filter((p) => p.token !== item.token))
                   }
@@ -97,6 +97,15 @@ export function ComparisonView({
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Category Performance Comparison</CardTitle>
+          <CardDescription>Comparing the performance of selected teams across different categories.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CategoryPerformanceComparison teams={selectedTeams} />
         </CardContent>
       </Card>
     </div>
@@ -122,7 +131,7 @@ function stringToColor(input: string): string {
     hash |= 0
   }
   const hue = Math.abs(hash) % 360
-  return `hsl(${hue} 70% 50%)`
+  return `${hue} 70% 50%`
 }
 
 function extractTeamName(teamKey: string): string {

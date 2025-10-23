@@ -31,12 +31,13 @@ export function TeamSelectionCard({
           )}
           <Combobox
             options={schools}
-            value={selectedSchool}
-            onChange={setSelectedSchool}
+            value={selectedSchool ? [selectedSchool] : []}
+            onChange={(value) => setSelectedSchool(value[value.length - 1] ?? "")}
             placeholder="Select School"
             searchPlaceholder="Search schools..."
             noResultsText="No schools found."
             className="w-full"
+            maxSelections={1}
           />
         </div>
       </CardContent>
