@@ -21,7 +21,7 @@ interface OverallData {
   "School": string;
   "Rank": number;
   "Business Presentation (50)": number;
-  "Sales Presentation (50)": number;
+  "Sales Presentation (50)"?: number;
   "Cost Event (100)": number;
   "Design (150)": number;
   "Acceleration (75)": number;
