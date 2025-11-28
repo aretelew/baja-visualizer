@@ -95,11 +95,47 @@ export function TeamPerformance({ selectedSchool, selectedCompetition: currentCo
     <div className="space-y-6">
       {/* Performance Chart */}
       <Card className="bg-card border-border">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>
             <CardTitle>Performance Over Time</CardTitle>
             <CardDescription>Score progression for {selectedSchool}</CardDescription>
           </div>
+          {teamPerformanceStats.length > 0 && (
+            <div className="flex flex-wrap justify-end gap-3 sm:gap-4 text-xs sm:text-sm">
+              <div className="border border-border rounded-md px-3 py-2  flex flex-col items-start gap-1 min-w-[110px]">
+                <span className="text-muted-foreground text-[11px] sm:text-xs">
+                  Competitions
+                </span>
+                <span className="font-semibold text-foreground text-sm sm:text-base">
+                  {teamPerformanceStats.length}
+                </span>
+              </div>
+              <div className="border border-border rounded-md px-3 py-2 flex flex-col items-start gap-1 min-w-[110px]">
+                <span className="text-muted-foreground text-[11px] sm:text-xs">
+                  Average Score
+                </span>
+                <span className="font-semibold text-foreground text-sm sm:text-base">
+                  {avgScore.toFixed(1)}
+                </span>
+              </div>
+              <div className="border border-border rounded-md px-3 py-2 flex flex-col items-start gap-1 min-w-[110px]">
+                <span className="text-muted-foreground text-[11px] sm:text-xs">
+                  Best Score
+                </span>
+                <span className="font-semibold text-foreground text-sm sm:text-base">
+                  {maxScore.toFixed(1)}
+                </span>
+              </div>
+              <div className="border border-border rounded-md px-3 py-2 flex flex-col items-start gap-1 min-w-[110px]">
+                <span className="text-muted-foreground text-[11px] sm:text-xs">
+                  Lowest Score
+                </span>
+                <span className="font-semibold text-foreground text-sm sm:text-base">
+                  {minScore.toFixed(1)}
+                </span>
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="p-0">
           <ChartContainer
@@ -146,37 +182,6 @@ export function TeamPerformance({ selectedSchool, selectedCompetition: currentCo
           </ChartContainer>
         </CardContent>
       </Card>
-
-      {/* Team Stats */}
-      <div className="grid gap-6 md:grid-cols-4">
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardDescription>Competitions</CardDescription>
-            <CardTitle className="text-2xl">{teamPerformanceStats.length}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardDescription>Average Score</CardDescription>
-            <CardTitle className="text-2xl">{avgScore.toFixed(1)}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardDescription>Best Score</CardDescription>
-            <CardTitle className="text-2xl">{maxScore.toFixed(1)}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardDescription>Lowest Score</CardDescription>
-            <CardTitle className="text-2xl">{minScore.toFixed(1)}</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
 
       {/* Radar Chart */}
       <div className="pt-6">

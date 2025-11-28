@@ -28,7 +28,8 @@ interface RawTeam {
     team_key: string;
   };
   Endurance: {
-    'Points (400)': number;
+    'Points (400)'?: number;
+    'Endurance Race Score (400)'?: number;
   };
 }
 
@@ -68,9 +69,11 @@ export function Top10Endurance({ selectedCompetition, selectedSchool }: { select
           const school = team.Overall.School;
           const team_key = team.Overall.team_key;
           const teamName = team_key.replace(school + ' - ', '');
+          const score = team.Endurance['Points (400)'] ?? team.Endurance['Endurance Race Score (400)'] ?? 0;
+          
           return {
             'Canonical_Team': teamName,
-            'Endurance (400)': team.Endurance['Points (400)'],
+            'Endurance (400)': score,
             'team_key': team_key,
             'school': school,
           }

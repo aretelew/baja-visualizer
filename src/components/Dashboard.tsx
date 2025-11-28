@@ -2,11 +2,9 @@ import { useState, useEffect } from "react"
 import { MostConsistentPrograms } from "./MostConsistentPrograms"
 import { CompetitionOverview } from "./CompetitionOverview"
 import { TeamPerformance } from "./TeamPerformance"
-
 import { ComparisonView } from "./ComparisonView"
 import { Header } from "./Header"
-import { TeamSelectionCard } from "./TeamSelectionCard"
-import { CompetitionSelectionCard } from "./CompetitionSelectionCard"
+import { FilterBar } from "./FilterBar"
 import { Top10Endurance } from "./Top10Endurance"
 import bajaData from "../../baja-data.json";
 
@@ -68,27 +66,20 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header activeView={activeView} setActiveView={setActiveView} />
+      <div className="sticky top-0 z-50">
+        <Header activeView={activeView} setActiveView={setActiveView} />
+        <FilterBar 
+          schools={schools}
+          selectedSchool={selectedSchool}
+          setSelectedSchool={setSelectedSchool}
+          competitions={competitions}
+          selectedCompetition={selectedCompetition}
+          setSelectedCompetition={setSelectedCompetition}
+        />
+      </div>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 space-y-6">
-        {activeView !== "compare" && (
-          <div className="grid grid-cols-2 gap-4">
-            <TeamSelectionCard 
-              schools={schools}
-              selectedSchool={selectedSchool}
-              setSelectedSchool={setSelectedSchool}
-            />
-            <CompetitionSelectionCard 
-              competitions={competitions}
-              selectedCompetition={selectedCompetition}
-              setSelectedCompetition={setSelectedCompetition}
-            />
-          </div>
-        )}
-
-
-
         {activeView === "overview" && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-6">

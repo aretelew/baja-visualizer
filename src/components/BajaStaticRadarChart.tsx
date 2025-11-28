@@ -21,6 +21,7 @@ interface OverallData {
   "School": string;
   "Rank": number;
   "Business Presentation (50)": number;
+  "Sales Presentation (50)": number;
   "Cost Event (100)": number;
   "Design (150)": number;
   "Acceleration (75)": number;
@@ -46,6 +47,7 @@ export function BajaStaticRadarChart({ overallData }: BajaRadarChartProps) {
     "Cost Event (100)",
     "Design (150)",
     "Business Presentation (50)",
+    "Sales Presentation (50)",
     "Cost (100)",
     "Presentation (50)",
     "Design (200)"
