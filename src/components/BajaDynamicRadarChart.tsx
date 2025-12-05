@@ -32,6 +32,7 @@ interface OverallData {
 
 interface BajaRadarChartProps {
   overallData: OverallData;
+  isAnimationActive?: boolean;
 }
 
 const chartConfig = {
@@ -41,7 +42,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function BajaDynamicRadarChart({ overallData }: BajaRadarChartProps) {
+export function BajaDynamicRadarChart({ overallData, isAnimationActive = true }: BajaRadarChartProps) {
           const excludedKeys = [
     "School",
     "Rank",
@@ -98,6 +99,7 @@ export function BajaDynamicRadarChart({ overallData }: BajaRadarChartProps) {
               dataKey="score"
               fill="var(--color-score)"
               fillOpacity={0.6}
+              isAnimationActive={isAnimationActive}
             />
           </RadarChart>
         </ChartContainer>

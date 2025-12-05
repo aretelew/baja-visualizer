@@ -1,8 +1,16 @@
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, LabelList } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
-import { useMemo } from "react";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useState } from "react";
 import bajaData from "../../baja-data.json";
+import { useChartAnimation } from "@/hooks/useChartAnimation";
 
 interface Team {
   token: string;
@@ -31,6 +39,7 @@ interface LabelListProps {
 
 interface CategoryPerformanceComparisonProps {
   teams: Team[];
+  suppressInitialAnimation?: boolean;
 }
 
 const EVENT_CATEGORIES = [
@@ -119,16 +128,12 @@ function readSectionPoints(teamData: TeamData, category: string): number | null 
   return null;
 }
 
-function getScore(teamData: TeamData, category: string): number {
+function getPoints(teamData: TeamData, category: string): number {
   if (!teamData) return 0;
-
-  const maxPoints = EVENT_POINTS[category];
-  if (!maxPoints) return 0;
 
   // Prefer explicit event sections, then fall back to Overall aggregates
   const sectionPoints = readSectionPoints(teamData, category);
-  const points = sectionPoints ?? readOverallPoints(teamData, category) ?? 0;
-  return (points / maxPoints) * 100;
+  return sectionPoints ?? readOverallPoints(teamData, category) ?? 0;
 }
 
 function resolveCompetitionData(competitionKey: string): CompetitionData | null {
@@ -156,36 +161,39 @@ function findTeamDataInCompetition(competitionData: CompetitionData, teamKey: st
   return found ?? null;
 }
 
-export function CategoryPerformanceComparison({ teams = [] }: CategoryPerformanceComparisonProps) {
-  const chartData = useMemo(() => {
-    if (teams.length === 0) {
-      return EVENT_CATEGORIES.map(category => ({ category }));
-    }
+export function CategoryPerformanceComparison({
+  teams = [],
+  suppressInitialAnimation = false,
+}: CategoryPerformanceComparisonProps) {
+  const [activeBarKey, setActiveBarKey] = useState<string | null>(null);
+  const animationKey = teams.map((team) => team.token).sort().join("|");
+  const shouldAnimate = useChartAnimation(animationKey, suppressInitialAnimation);
 
-    return EVENT_CATEGORIES.map(category => {
+  const perEventCharts = useMemo(() => {
+    return EVENT_CATEGORIES.map((category) => {
       const entry: { [key: string]: string | number } = { category };
-      teams.forEach(team => {
-        // Resolve competition with potential trailing spaces or minor variants
+      const maxPoints = EVENT_POINTS[category] ?? 0;
+      teams.forEach((team) => {
         const competitionData = resolveCompetitionData(team.competition);
         if (competitionData) {
           const teamData = findTeamDataInCompetition(competitionData, team.teamKey);
-          const rawScore = teamData ? getScore(teamData, category) : 0;
-          const cappedScore = Math.min(rawScore, 100);
-          const overflowAmount = Math.max(0, rawScore - 100);
-          entry[team.token] = cappedScore;
+          const rawPoints = teamData ? getPoints(teamData, category) : 0;
+          const cappedPoints = maxPoints ? Math.min(rawPoints, maxPoints) : rawPoints;
+          const overflowAmount = maxPoints ? Math.max(0, rawPoints - maxPoints) : 0;
+          entry[team.token] = cappedPoints;
           entry[`${team.token}__overflow`] = overflowAmount;
         } else {
           entry[team.token] = 0;
           entry[`${team.token}__overflow`] = 0;
         }
       });
-      return entry;
+      return { category, data: [entry], maxPoints };
     });
   }, [teams]);
 
   const chartConfig = useMemo(() => {
-    const config: { [key: string]: { label: string, color: string } } = {};
-    teams.forEach(team => {
+    const config: { [key: string]: { label: string; color: string } } = {};
+    teams.forEach((team) => {
       const competitionLabel = team.competition.trim();
       config[team.token] = {
         label: `${extractTeamName(team.teamKey)} - ${team.school} - ${competitionLabel}`,
@@ -196,40 +204,80 @@ export function CategoryPerformanceComparison({ teams = [] }: CategoryPerformanc
   }, [teams]);
 
   return (
-    <ChartContainer config={chartConfig} className="h-[400px] w-full">
-      <BarChart data={chartData} margin={{ top: 16 }}>
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey="category"
-          tickLine={false}
-          tickMargin={10}
-          axisLine={false}
-        />
-        <YAxis
-          domain={[0, 100]}
-          tickFormatter={(value) => `${value}%`}
-          tickLine={false}
-          tickMargin={10}
-          axisLine={false}
-        />
-        <ChartTooltip
-          cursor={false}
-          content={<ChartTooltipContent indicator="dashed" />}
-        />
-        <ChartLegend content={(props: any) => <ChartLegendContent {...props} />} />
-        {teams.map((team) => (
-          <Bar key={team.token} dataKey={team.token} fill={chartConfig[team.token]?.color} radius={4}>
-            <LabelList content={(props: LabelListProps) => (
-              <OverflowMarker
-                {...props}
-                teamToken={team.token}
-                color={chartConfig[team.token]?.color}
-              />
-            )} />
-          </Bar>
-        ))}
-      </BarChart>
-    </ChartContainer>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {perEventCharts.map(({ category, data, maxPoints }) => {
+        const yMax = maxPoints && maxPoints > 0 ? maxPoints : 100;
+        return (
+          <Card key={category}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">{category}</CardTitle>
+              <CardDescription>
+                {EVENT_POINTS[category] ? `Max ${EVENT_POINTS[category]} pts` : "Event performance"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {teams.length === 0 ? (
+                <div className="flex h-[240px] items-center justify-center text-sm text-muted-foreground">
+                  Add teams to compare this event.
+                </div>
+              ) : (
+                <ChartContainer config={chartConfig} className="h-[280px] w-full">
+                  <BarChart
+                    data={data}
+                    margin={{ top: 16, right: 16 }}
+                    onMouseLeave={() => setActiveBarKey(null)}
+                  >
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="category" tickLine={false} tickMargin={8} axisLine={false} />
+                    <YAxis
+                      domain={[0, yMax]}
+                      tickLine={false}
+                      tickMargin={10}
+                      axisLine={false}
+                    />
+                    <ChartTooltip
+                      cursor={false}
+                      content={(props: any) => (
+                        <ChartTooltipContent
+                          {...props}
+                          indicator="dashed"
+                          payload={
+                            activeBarKey
+                              ? props.payload?.filter((item: any) => item.dataKey === activeBarKey)
+                              : props.payload
+                          }
+                        />
+                      )}
+                    />
+                    <ChartLegend content={(props: any) => <ChartLegendContent {...props} />} />
+                    {teams.map((team) => (
+                      <Bar
+                        key={team.token}
+                        dataKey={team.token}
+                        fill={chartConfig[team.token]?.color}
+                        radius={4}
+                        onMouseEnter={() => setActiveBarKey(team.token)}
+                        isAnimationActive={shouldAnimate}
+                      >
+                        <LabelList
+                          content={(props: LabelListProps) => (
+                            <OverflowMarker
+                              {...props}
+                              teamToken={team.token}
+                              color={chartConfig[team.token]?.color}
+                            />
+                          )}
+                        />
+                      </Bar>
+                    ))}
+                  </BarChart>
+                </ChartContainer>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
   );
 }
 

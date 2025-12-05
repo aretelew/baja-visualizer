@@ -271,7 +271,7 @@ function ChartLegendContent({
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-4",
+        "flex flex-wrap items-center justify-start gap-3 text-xs",
         verticalAlign === "top" ? "pb-3" : "pt-3",
         className
       )}
@@ -281,6 +281,8 @@ function ChartLegendContent({
         .map((item) => {
           const key = `${nameKey || item.dataKey || "value"}`
           const itemConfig = getPayloadConfigFromPayload(config, item, key)
+          const label =
+            typeof itemConfig?.label === "string" ? itemConfig.label : itemConfig?.label
 
           return (
             <div
@@ -299,7 +301,12 @@ function ChartLegendContent({
                   }}
                 />
               )}
-              {itemConfig?.label}
+              <span
+                className="max-w-[150px] truncate text-foreground/90"
+                title={typeof label === "string" ? label : undefined}
+              >
+                {label}
+              </span>
             </div>
           )
         })}

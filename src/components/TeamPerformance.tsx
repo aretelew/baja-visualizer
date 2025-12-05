@@ -7,6 +7,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Line, LineChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import { BajaDynamicRadarChart } from "./BajaDynamicRadarChart"
 import { BajaStaticRadarChart } from "./BajaStaticRadarChart"
+import { useChartAnimation } from "@/hooks/useChartAnimation"
 
 type OverallData = {
   "School": string;
@@ -38,7 +39,15 @@ interface CompetitionData {
   fullData: Team | undefined;
 }
 
-export function TeamPerformance({ selectedSchool, selectedCompetition: currentCompetition }: { selectedSchool: string, selectedCompetition: string }) { 
+export function TeamPerformance({
+  selectedSchool,
+  selectedCompetition: currentCompetition,
+  suppressInitialAnimation = false,
+}: {
+  selectedSchool: string;
+  selectedCompetition: string;
+  suppressInitialAnimation?: boolean;
+}) { 
 
   const allCompetitions = useMemo(() => {
     return Object.keys(bajaData).reverse();
@@ -66,6 +75,8 @@ export function TeamPerformance({ selectedSchool, selectedCompetition: currentCo
   const teamPerformanceStats = useMemo(() => chartData.filter(d => d.score !== 0), [chartData]);
 
   const [selectedCompetition, setSelectedCompetition] = useState<CompetitionData | undefined>();
+  const animationKey = `${selectedSchool || "none"}-${currentCompetition || "all"}`;
+  const shouldAnimate = useChartAnimation(animationKey, suppressInitialAnimation);
 
   useEffect(() => {
     if (currentCompetition) {
@@ -177,6 +188,7 @@ export function TeamPerformance({ selectedSchool, selectedCompetition: currentCo
                   stroke="var(--chart-1)"
                   strokeWidth={2}
                   dot={true}
+                  isAnimationActive={shouldAnimate}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -194,10 +206,20 @@ export function TeamPerformance({ selectedSchool, selectedCompetition: currentCo
         </div>
         <div className="mt-4 grid grid-cols-2 gap-6">
           <div>
-            {selectedCompetition?.fullData?.Overall && <BajaDynamicRadarChart overallData={selectedCompetition.fullData.Overall as OverallData} />}
+              {selectedCompetition?.fullData?.Overall && (
+                <BajaDynamicRadarChart
+                  overallData={selectedCompetition.fullData.Overall as OverallData}
+                  isAnimationActive={shouldAnimate}
+                />
+              )}
           </div>
           <div>
-            {selectedCompetition?.fullData?.Overall && <BajaStaticRadarChart overallData={selectedCompetition.fullData.Overall as OverallData} />}
+              {selectedCompetition?.fullData?.Overall && (
+                <BajaStaticRadarChart
+                  overallData={selectedCompetition.fullData.Overall as OverallData}
+                  isAnimationActive={shouldAnimate}
+                />
+              )}
           </div>
         </div>
         <div className="text-muted-foreground text-center pt-4">

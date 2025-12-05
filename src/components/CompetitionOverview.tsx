@@ -12,6 +12,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import bajaData from '../../baja-data.json';
+import { useChartAnimation } from '@/hooks/useChartAnimation';
 
 import { Cell } from 'recharts';
 
@@ -72,8 +73,18 @@ const CustomBarLabel = ({
   );
 };
 
-export function CompetitionOverview({ selectedCompetition, selectedSchool }: { selectedCompetition: string, selectedSchool: string }) {
+export function CompetitionOverview({
+  selectedCompetition,
+  selectedSchool,
+  suppressInitialAnimation = false,
+}: {
+  selectedCompetition: string;
+  selectedSchool: string;
+  suppressInitialAnimation?: boolean;
+}) {
   const [chartData, setChartData] = useState<TeamData[]>([]);
+  const animationKey = selectedCompetition || "none";
+  const shouldAnimate = useChartAnimation(animationKey, suppressInitialAnimation);
 
   useEffect(() => {
     if (selectedCompetition) {
@@ -136,7 +147,12 @@ export function CompetitionOverview({ selectedCompetition, selectedSchool }: { s
                 }}
               />}
             />
-            <Bar dataKey="Overall (1000)" radius={4} label={<CustomBarLabel data={chartData} />}>
+            <Bar
+              dataKey="Overall (1000)"
+              radius={4}
+              label={<CustomBarLabel data={chartData} />}
+              isAnimationActive={shouldAnimate}
+            >
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={'var(--chart-1)'} stroke={entry.school === selectedSchool ? 'var(--selected-border-color)' : 'transparent'} strokeWidth={2} />
               ))}

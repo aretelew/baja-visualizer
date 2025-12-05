@@ -8,10 +8,11 @@ import {
 import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu-utils"
 import { ThemeToggle } from "./ThemeToggle"
 import { TrendingUp } from "lucide-react"
+import type { ViewKey } from "@/types/views"
 
 interface HeaderProps {
-  activeView: string;
-  setActiveView: (view: string) => void;
+  activeView: ViewKey;
+  setActiveView: (view: ViewKey) => void;
 }
 
 export function Header({ activeView, setActiveView }: HeaderProps) {
@@ -46,15 +47,6 @@ export function Header({ activeView, setActiveView }: HeaderProps) {
                     onClick={() => setActiveView('teams')}
                   >
                     Team Performance
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink
-                    className={navigationMenuTriggerStyle()}
-                    active={activeView === 'trends'}
-                    onClick={() => setActiveView('trends')}
-                  >
-                    Trends
                   </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>

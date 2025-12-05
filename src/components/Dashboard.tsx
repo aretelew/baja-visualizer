@@ -7,6 +7,7 @@ import { Header } from "./Header"
 import { FilterBar } from "./FilterBar"
 import { Top10Endurance } from "./Top10Endurance"
 import bajaData from "../../baja-data.json";
+import type { ViewKey } from "@/types/views"
 
 interface TeamData {
   Overall: {
@@ -16,12 +17,17 @@ interface TeamData {
 }
 
 export function Dashboard() {
-  const [activeView, setActiveView] = useState("overview");
+  const [activeView, setActiveView] = useState<ViewKey>("overview");
   const [data, setData] = useState<Record<string, Record<string, TeamData>>>({});
   const [competitions, setCompetitions] = useState<string[]>([]);
   const [schools, setSchools] = useState<{ value: string; label: string }[]>([]);
   const [selectedCompetition, setSelectedCompetition] = useState<string>("");
   const [selectedSchool, setSelectedSchool] = useState<string>("");
+  const [visitedViews, setVisitedViews] = useState<Record<ViewKey, boolean>>({
+    overview: false,
+    teams: false,
+    compare: false,
+  });
 
   useEffect(() => {
     setData(bajaData as Record<string, Record<string, TeamData>>);
@@ -64,18 +70,31 @@ export function Dashboard() {
     }
   }, [selectedSchool, data, selectedCompetition]);
 
+  useEffect(() => {
+    setVisitedViews((prev) =>
+      prev[activeView]
+        ? prev
+        : {
+            ...prev,
+            [activeView]: true,
+          }
+    );
+  }, [activeView]);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="sticky top-0 z-50">
         <Header activeView={activeView} setActiveView={setActiveView} />
-        <FilterBar 
-          schools={schools}
-          selectedSchool={selectedSchool}
-          setSelectedSchool={setSelectedSchool}
-          competitions={competitions}
-          selectedCompetition={selectedCompetition}
-          setSelectedCompetition={setSelectedCompetition}
-        />
+        {activeView !== "compare" && (
+          <FilterBar 
+            schools={schools}
+            selectedSchool={selectedSchool}
+            setSelectedSchool={setSelectedSchool}
+            competitions={competitions}
+            selectedCompetition={selectedCompetition}
+            setSelectedCompetition={setSelectedCompetition}
+          />
+        )}
       </div>
 
       {/* Main Content */}
@@ -83,8 +102,16 @@ export function Dashboard() {
         {activeView === "overview" && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
-              <CompetitionOverview selectedCompetition={selectedCompetition} selectedSchool={selectedSchool} />
-              <Top10Endurance selectedCompetition={selectedCompetition} selectedSchool={selectedSchool} />
+              <CompetitionOverview
+                selectedCompetition={selectedCompetition}
+                selectedSchool={selectedSchool}
+                suppressInitialAnimation={visitedViews.overview}
+              />
+              <Top10Endurance
+                selectedCompetition={selectedCompetition}
+                selectedSchool={selectedSchool}
+                suppressInitialAnimation={visitedViews.overview}
+              />
             </div>
             <MostConsistentPrograms />
           </div>
@@ -92,13 +119,11 @@ export function Dashboard() {
 
         {activeView === "teams" && (
           <div className="space-y-6">
-            <TeamPerformance selectedSchool={selectedSchool} selectedCompetition={selectedCompetition} />
-          </div>
-        )}
-
-        {activeView === "trends" && (
-          <div className="space-y-6">
-            {/* Add TrendAnalysis content here if needed */}
+            <TeamPerformance
+              selectedSchool={selectedSchool}
+              selectedCompetition={selectedCompetition}
+              suppressInitialAnimation={visitedViews.teams}
+            />
           </div>
         )}
 
@@ -107,6 +132,7 @@ export function Dashboard() {
             schools={schools}
             selectedCompetition={selectedCompetition}
             selectedSchool={selectedSchool}
+            suppressInitialAnimation={visitedViews.compare}
           />
         )}
       </main>

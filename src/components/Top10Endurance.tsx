@@ -12,6 +12,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import bajaData from '../../baja-data.json';
+import { useChartAnimation } from '@/hooks/useChartAnimation';
 
 import { Cell } from 'recharts';
 
@@ -56,8 +57,18 @@ const CustomBarLabel = (data: TeamData[]) => (props: LabelProps) => {
   return <text x={numX + 10} y={numY + numHeight / 2} fill="#fff" textAnchor="start" dominantBaseline="middle">{entry?.Canonical_Team}</text>;
 };
 
-export function Top10Endurance({ selectedCompetition, selectedSchool }: { selectedCompetition: string, selectedSchool: string }) {
+export function Top10Endurance({
+  selectedCompetition,
+  selectedSchool,
+  suppressInitialAnimation = false,
+}: {
+  selectedCompetition: string;
+  selectedSchool: string;
+  suppressInitialAnimation?: boolean;
+}) {
   const [chartData, setChartData] = useState<TeamData[]>([]);
+  const animationKey = selectedCompetition || "none";
+  const shouldAnimate = useChartAnimation(animationKey, suppressInitialAnimation);
 
   useEffect(() => {
     if (selectedCompetition) {
@@ -121,7 +132,12 @@ export function Top10Endurance({ selectedCompetition, selectedSchool }: { select
                 }}
               />}
             />
-            <Bar dataKey="Endurance (400)" radius={4} label={CustomBarLabel(chartData)}>
+            <Bar
+              dataKey="Endurance (400)"
+              radius={4}
+              label={CustomBarLabel(chartData)}
+              isAnimationActive={shouldAnimate}
+            >
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={'var(--chart-1)'} stroke={entry.school === selectedSchool ? 'var(--selected-border-color)' : 'transparent'} strokeWidth={2} />
               ))}

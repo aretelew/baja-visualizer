@@ -33,6 +33,7 @@ interface OverallData {
 
 interface BajaRadarChartProps {
   overallData: OverallData;
+  isAnimationActive?: boolean;
 }
 
 const chartConfig = {
@@ -42,7 +43,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function BajaStaticRadarChart({ overallData }: BajaRadarChartProps) {
+export function BajaStaticRadarChart({ overallData, isAnimationActive = true }: BajaRadarChartProps) {
           const includedKeys = [
     "Cost Event (100)",
     "Design (150)",
@@ -91,6 +92,7 @@ export function BajaStaticRadarChart({ overallData }: BajaRadarChartProps) {
               dataKey="score"
               fill="var(--color-score)"
               fillOpacity={0.6}
+              isAnimationActive={isAnimationActive}
             />
           </RadarChart>
         </ChartContainer>
