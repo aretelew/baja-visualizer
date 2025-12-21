@@ -1,4 +1,3 @@
-import { CategoryPerformanceComparison } from "./CategoryPerformanceComparison";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Check, Plus, SearchX } from "lucide-react"
@@ -6,10 +5,11 @@ import bajaData from "../../baja-data.json"
 import { useMemo, useState } from "react"
 import { TeamCard } from "./TeamCard"
 import { Button } from "@/components/ui/button"
+import { CategoryBarChart } from "./CategoryBarChart"
+import type { TeamData, BajaData, SelectedTeam } from "@/types/views"
+import { stringToColor, extractTeamName } from "@/lib/utils"
+import type { ChartConfig } from "@/components/ui/chart"
 
-type TeamData = { Overall: { School: string; team_key: string } }
-type BajaData = Record<string, Record<string, TeamData>>
-type SelectedTeam = { token: string; competition: string; school: string; teamKey: string }
 type TeamOption = {
   value: string
   label: string
@@ -18,28 +18,123 @@ type TeamOption = {
   school: string
   teamKey: string
   teamName: string
+  lookupKey: string
 }
 
 const MAX_SELECTIONS = 6
 const MIN_SEARCH_LENGTH = 2
 const MAX_RESULTS = 40
 
+// --- Helpers for Data Normalization (adapted from CategoryPerformanceComparison) ---
+
+const CATEGORY_ALIASES: Record<string, { overallKeys: string[]; sectionKeys: string[]; scoreKeys: string[] }> = {
+  "Acceleration": {
+    overallKeys: ["Acceleration (75)"],
+    sectionKeys: ["Acceleration", "Accel"],
+    scoreKeys: ["Acceleration Score (75)", "Score", "score"],
+  },
+  "Suspension": {
+    overallKeys: ["Suspension & Traction (75)"],
+    sectionKeys: ["Suspension & Traction", "S&T"],
+    scoreKeys: ["Suspension & Traction Score (75)", "Score", "score"],
+  },
+  "Maneuverability": {
+    overallKeys: ["Maneuverability (75)", "Land Manuverability (75)"],
+    sectionKeys: ["Maneuverability", "Manv"],
+    scoreKeys: ["Maneuverability Score (75)", "Land Manuverability Score (75)", "Score", "score"],
+  },
+  "Hill Climb": {
+    overallKeys: ["Hill Climb (75)"],
+    sectionKeys: ["Hill Climb", "Hill"],
+    scoreKeys: ["Hill Climb Score (75)", "Score", "score"],
+  },
+  "Rock Crawl": {
+    overallKeys: ["Rock Crawl (75)"],
+    sectionKeys: ["Rock Crawl"],
+    scoreKeys: ["Rock Crawl Score (75)", "Score", "score"],
+  },
+  "Endurance": {
+    overallKeys: ["Endurance (400)", "Endurance Race (400)"],
+    sectionKeys: ["Endurance"],
+    scoreKeys: ["Endurance Race Score (400)", "Points (400)", "Points", "Score", "score"],
+  },
+};
+
+const CATEGORIES = ["Acceleration", "Suspension", "Maneuverability", "Hill Climb", "Rock Crawl", "Endurance"];
+
+function coerceNumber(value: unknown): number | null {
+  if (typeof value === "number" && !Number.isNaN(value)) return value;
+  return null;
+}
+
+function readOverallPoints(teamData: TeamData, category: string): number | null {
+  const overall = teamData?.Overall;
+  if (!overall) return null;
+  const aliases = CATEGORY_ALIASES[category]?.overallKeys ?? [];
+  for (const key of aliases) {
+    const val = coerceNumber(overall[key as keyof typeof overall]);
+    if (val != null) return val;
+  }
+  return null;
+}
+
+function readSectionPoints(teamData: TeamData, category: string): number | null {
+  const aliasCfg = CATEGORY_ALIASES[category];
+  if (!aliasCfg) return null;
+  for (const sectionKey of aliasCfg.sectionKeys) {
+    const section = teamData?.[sectionKey];
+    if (!section) continue;
+    for (const scoreKey of aliasCfg.scoreKeys) {
+      const val = coerceNumber(section[scoreKey]);
+      if (val != null) return val;
+    }
+    // Generic fallback: find first numeric key that includes "Score"
+    const candidate = Object.entries(section).find(([k, v]) => /score/i.test(k) && typeof v === "number");
+    if (candidate && typeof candidate[1] === "number") return candidate[1] as number;
+  }
+  return null;
+}
+
+function getPoints(teamData: TeamData, category: string): number {
+  if (!teamData) return 0;
+  // Prefer explicit event sections, then fall back to Overall aggregates
+  const sectionPoints = readSectionPoints(teamData, category);
+  return sectionPoints ?? readOverallPoints(teamData, category) ?? 0;
+}
+
+// --------------------------------------------------------------------------
+
 interface ComparisonViewProps {
   schools?: { value: string; label: string }[]
   selectedCompetition?: string
   selectedSchool?: string
-  suppressInitialAnimation?: boolean
 }
 
-export function ComparisonView({ suppressInitialAnimation = false }: ComparisonViewProps) {
+export function ComparisonView({ }: ComparisonViewProps) {
   const [selectedTeams, setSelectedTeams] = useState<SelectedTeam[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+
+  const chartConfig = useMemo(() => {
+    const config: ChartConfig = {
+      score: {
+        label: "Score",
+        color: "#2563eb",
+      },
+    }
+    selectedTeams.forEach((team) => {
+      config[team.token] = {
+        label: `${extractTeamName(team.teamKey)} (${team.competition})`,
+        color: `hsl(${stringToColor(team.token)})`,
+      }
+    })
+    return config
+  }, [selectedTeams])
 
   const options = useMemo<TeamOption[]>(() => {
     const entries: TeamOption[] = []
     Object.keys(bajaData as BajaData).forEach((competition) => {
       const teamsForComp = (bajaData as BajaData)[competition] as Record<string, TeamData>
-      Object.values(teamsForComp).forEach((team) => {
+      Object.entries(teamsForComp).forEach(([lookupKey, team]) => {
         const school = team.Overall.School
         const teamKey = team.Overall.team_key
         const teamName = extractTeamName(teamKey)
@@ -52,6 +147,7 @@ export function ComparisonView({ suppressInitialAnimation = false }: ComparisonV
           school,
           teamKey,
           teamName,
+          lookupKey,
           searchValue: `${school} ${teamName} ${competition}`.toLowerCase(),
         })
       })
@@ -96,10 +192,28 @@ export function ComparisonView({ suppressInitialAnimation = false }: ComparisonV
           competition: option.competition,
           school: option.school,
           teamKey: option.teamKey,
+          lookupKey: option.lookupKey,
         },
       ]
     })
   }
+
+  const graphs = useMemo(() => {
+    return CATEGORIES.map((category) => {
+      const data = selectedTeams.map((team) => {
+        const teamData = (bajaData as BajaData)[team.competition]?.[team.lookupKey];
+        const score = teamData ? getPoints(teamData, category) : 0;
+        return {
+          token: team.token,
+          school: team.school,
+          score: score,
+          label: `${extractTeamName(team.teamKey)} (${team.competition})`,
+          fill: `hsl(${stringToColor(team.token)})`,
+        }
+      });
+      return { category, data };
+    });
+  }, [selectedTeams])
 
   return (
     <div className="space-y-6">
@@ -213,39 +327,33 @@ export function ComparisonView({ suppressInitialAnimation = false }: ComparisonV
         </Card>
       </div>
 
-      <div className="space-y-3">
-        <div className="space-y-1">
-          <div className="text-lg font-semibold leading-none">Category Performance Comparison</div>
-          <div className="text-sm text-muted-foreground">
-            Each event is displayed separately for clearer team-to-team comparisons.
-          </div>
+      <div className="space-y-1 pt-4">
+        <div className="text-xl font-semibold leading-none">Category Performance Comparison</div>
+        <div className="text-sm text-muted-foreground">
+          Individual event results for side-by-side team analytics.
         </div>
-        <CategoryPerformanceComparison
-          teams={selectedTeams}
-          suppressInitialAnimation={suppressInitialAnimation}
-        />
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
+        {graphs.map(({ category, data }) => (
+          <Card key={category}>
+            <CardHeader>
+                <CardTitle>{category}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <CategoryBarChart
+                  data={data}
+                  config={chartConfig}
+                />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
     </div>
   )
 }
 
 function makeToken(competition: string, school: string, teamKey: string) {
   return `${competition}:::${school}:::${teamKey}`
-}
-
-function stringToColor(input: string): string {
-  let hash = 0
-  for (let i = 0; i < input.length; i++) {
-    hash = input.charCodeAt(i) + ((hash << 5) - hash)
-    hash |= 0
-  }
-  const hue = Math.abs(hash) % 360
-  return `${hue} 70% 50%`
-}
-
-function extractTeamName(teamKey: string): string {
-  // team_key is typically "School - Team Name" or "School - Campus - Team Name".
-  // We treat the last segment as the team name.
-  const parts = teamKey.split(" - ").map((p) => p.trim()).filter(Boolean)
-  return parts.length ? parts[parts.length - 1] : teamKey
 }

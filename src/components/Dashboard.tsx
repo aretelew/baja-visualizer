@@ -132,7 +132,6 @@ export function Dashboard() {
             schools={schools}
             selectedCompetition={selectedCompetition}
             selectedSchool={selectedSchool}
-            suppressInitialAnimation={visitedViews.compare}
           />
         )}
       </main>
