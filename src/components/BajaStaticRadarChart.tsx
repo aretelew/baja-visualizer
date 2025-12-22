@@ -5,6 +5,7 @@ import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts"
 import {
   Card,
   CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -97,6 +98,9 @@ export function BajaStaticRadarChart({ overallData, isAnimationActive = true }: 
           </RadarChart>
         </ChartContainer>
       </CardContent>
+      <CardFooter className="flex-col gap-2 text-sm text-muted-foreground pt-4">
+        Scores are normalized to a 0-100 scale.
+      </CardFooter>
     </Card>
   )
 }

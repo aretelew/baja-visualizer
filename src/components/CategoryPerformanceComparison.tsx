@@ -237,19 +237,19 @@ export function CategoryPerformanceComparison({
                     />
                     <ChartTooltip
                       cursor={false}
-                      content={(props: any) => (
+                      content={(props) => (
                         <ChartTooltipContent
                           {...props}
                           indicator="dashed"
                           payload={
                             activeBarKey
-                              ? props.payload?.filter((item: any) => item.dataKey === activeBarKey)
+                              ? props.payload?.filter((item) => item.dataKey === activeBarKey)
                               : props.payload
                           }
                         />
                       )}
                     />
-                    <ChartLegend content={(props: any) => <ChartLegendContent {...props} />} />
+                    <ChartLegend content={(props) => <ChartLegendContent {...props} />} />
                     {teams.map((team) => (
                       <Bar
                         key={team.token}

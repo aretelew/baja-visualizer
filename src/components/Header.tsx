@@ -9,6 +9,7 @@ import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu-util
 import { ThemeToggle } from "./ThemeToggle"
 import { TrendingUp } from "lucide-react"
 import type { ViewKey } from "@/types/views"
+import { cn } from "@/lib/utils"
 
 interface HeaderProps {
   activeView: ViewKey;
@@ -33,25 +34,34 @@ export function Header({ activeView, setActiveView }: HeaderProps) {
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuLink
-                    className={navigationMenuTriggerStyle()}
-                    active={activeView === 'overview'}
-                    onClick={() => setActiveView('overview')}
+                    className={cn(navigationMenuTriggerStyle(), "data-[active]:border-primary")}
+                    active={activeView === 'overall'}
+                    onClick={() => setActiveView('overall')}
                   >
-                    Overview
+                    Overall
                   </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <NavigationMenuLink
-                    className={navigationMenuTriggerStyle()}
-                    active={activeView === 'teams'}
-                    onClick={() => setActiveView('teams')}
+                    className={cn(navigationMenuTriggerStyle(), "data-[active]:border-primary")}
+                    active={activeView === 'event'}
+                    onClick={() => setActiveView('event')}
                   >
-                    Team Performance
+                    Event
                   </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <NavigationMenuLink
-                    className={navigationMenuTriggerStyle()}
+                    className={cn(navigationMenuTriggerStyle(), "data-[active]:border-primary")}
+                    active={activeView === 'team'}
+                    onClick={() => setActiveView('team')}
+                  >
+                    Team
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink
+                    className={cn(navigationMenuTriggerStyle(), "data-[active]:border-primary")}
                     active={activeView === 'compare'}
                     onClick={() => setActiveView('compare')}
                   >

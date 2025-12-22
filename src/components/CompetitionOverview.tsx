@@ -14,8 +14,6 @@ import {
 import bajaData from '../../baja-data.json';
 import { useChartAnimation } from '@/hooks/useChartAnimation';
 
-import { Cell } from 'recharts';
-
 interface TeamData {
   'Canonical_Team': string;
   'Overall (1000)': number;
@@ -75,11 +73,9 @@ const CustomBarLabel = ({
 
 export function CompetitionOverview({
   selectedCompetition,
-  selectedSchool,
   suppressInitialAnimation = false,
 }: {
   selectedCompetition: string;
-  selectedSchool: string;
   suppressInitialAnimation?: boolean;
 }) {
   const [chartData, setChartData] = useState<TeamData[]>([]);
@@ -131,7 +127,7 @@ export function CompetitionOverview({
             />
             <XAxis dataKey="Overall (1000)" type="number" />
             <ChartTooltip
-              cursor={false}
+              cursor={true}
               content={<ChartTooltipContent
                 indicator="line"
                 labelFormatter={(value, payload) => {
@@ -149,14 +145,12 @@ export function CompetitionOverview({
             />
             <Bar
               dataKey="Overall (1000)"
+              fill="var(--chart-1)"
+              fillOpacity={0.7}
               radius={4}
               label={<CustomBarLabel data={chartData} />}
               isAnimationActive={shouldAnimate}
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={'var(--chart-1)'} stroke={entry.school === selectedSchool ? 'var(--selected-border-color)' : 'transparent'} strokeWidth={2} />
-              ))}
-            </Bar>
+            />
           </BarChart>
         </ChartContainer>
       </CardContent>

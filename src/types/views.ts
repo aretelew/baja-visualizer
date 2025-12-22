@@ -1,8 +1,8 @@
-export type ViewKey = "overview" | "teams" | "compare";
+export type ViewKey = "overall" | "event" | "team" | "compare";
 
 export type TeamData = { 
   Overall: { School: string; team_key: string };
-  [key: string]: any;
+  [key: string]: Record<string, unknown> | { School: string; team_key: string };
 }
 
 export type BajaData = Record<string, Record<string, TeamData>>

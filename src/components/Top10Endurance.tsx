@@ -14,8 +14,6 @@ import {
 import bajaData from '../../baja-data.json';
 import { useChartAnimation } from '@/hooks/useChartAnimation';
 
-import { Cell } from 'recharts';
-
 interface TeamData {
   'Canonical_Team': string;
   'Endurance (400)': number;
@@ -59,11 +57,9 @@ const CustomBarLabel = (data: TeamData[]) => (props: LabelProps) => {
 
 export function Top10Endurance({
   selectedCompetition,
-  selectedSchool,
   suppressInitialAnimation = false,
 }: {
   selectedCompetition: string;
-  selectedSchool: string;
   suppressInitialAnimation?: boolean;
 }) {
   const [chartData, setChartData] = useState<TeamData[]>([]);
@@ -116,7 +112,7 @@ export function Top10Endurance({
             />
             <XAxis dataKey="Endurance (400)" type="number" domain={[0, 400]} />
             <ChartTooltip
-              cursor={false}
+              cursor={true}
               content={<ChartTooltipContent
                 indicator="line"
                 labelFormatter={(value, payload) => {
@@ -134,14 +130,12 @@ export function Top10Endurance({
             />
             <Bar
               dataKey="Endurance (400)"
+              fill="var(--chart-1)"
+              fillOpacity={0.7}
               radius={4}
               label={CustomBarLabel(chartData)}
               isAnimationActive={shouldAnimate}
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={'var(--chart-1)'} stroke={entry.school === selectedSchool ? 'var(--selected-border-color)' : 'transparent'} strokeWidth={2} />
-              ))}
-            </Bar>
+            />
           </BarChart>
         </ChartContainer>
       </CardContent>

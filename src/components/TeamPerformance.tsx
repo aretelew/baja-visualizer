@@ -222,9 +222,6 @@ export function TeamPerformance({
               )}
           </div>
         </div>
-        <div className="text-muted-foreground text-center pt-4">
-          Scores are normalized to a 0-100 scale for comparison.
-        </div>
       </div>
     </div>
   )

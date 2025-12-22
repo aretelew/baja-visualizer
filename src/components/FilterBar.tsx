@@ -1,4 +1,5 @@
 import { Combobox } from "@/components/ui/combobox"
+import type { ViewKey } from "@/types/views"
 
 interface FilterBarProps {
   schools: { value: string; label: string }[];
@@ -7,6 +8,7 @@ interface FilterBarProps {
   competitions: string[];
   selectedCompetition: string;
   setSelectedCompetition: (competition: string) => void;
+  activeView: ViewKey;
 }
 
 export function FilterBar({
@@ -16,26 +18,29 @@ export function FilterBar({
   competitions,
   selectedCompetition,
   setSelectedCompetition,
+  activeView,
 }: FilterBarProps) {
   return (
     <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-6 py-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-           <div className="space-y-2">
-             <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-               Team
-             </label>
-             <Combobox
-              options={schools}
-              value={selectedSchool}
-              onChange={(value) => setSelectedSchool(typeof value === 'string' ? value : value?.[0] || "")}
-              placeholder="Select School"
-              searchPlaceholder="Search schools..."
-              noResultsText="No schools found."
-              className="w-full"
-              maxSelections={1}
-            />
-           </div>
+        <div className={`grid grid-cols-1 ${activeView !== 'event' ? 'md:grid-cols-2' : ''} gap-4`}>
+           {activeView !== 'event' && (
+             <div className="space-y-2">
+               <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                 Team
+               </label>
+               <Combobox
+                options={schools}
+                value={selectedSchool}
+                onChange={(value) => setSelectedSchool(typeof value === 'string' ? value : value?.[0] || "")}
+                placeholder="Select School"
+                searchPlaceholder="Search schools..."
+                noResultsText="No schools found."
+                className="w-full"
+                maxSelections={1}
+              />
+             </div>
+           )}
 
            <div className="space-y-2">
              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">

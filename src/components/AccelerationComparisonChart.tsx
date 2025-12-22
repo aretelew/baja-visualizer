@@ -35,7 +35,7 @@ export function AccelerationComparisonChart({ teams }: AccelerationComparisonCha
     )
   }
 
-  const chartDataEntry: Record<string, any> = { category: "Acceleration" }
+  const chartDataEntry: { category: string; [key: string]: string | number } = { category: "Acceleration" }
   const chartConfig: ChartConfig = {}
 
   teams.forEach((team, index) => {
@@ -43,7 +43,7 @@ export function AccelerationComparisonChart({ teams }: AccelerationComparisonCha
     const teamData = bajaData[team.competition]?.[team.teamKey]
     const score = teamData?.Acceleration?.Score || 0
     
-    chartDataEntry[key] = score
+    chartDataEntry[key] = score as number
     
     chartConfig[key] = {
       label: `${extractTeamName(team.teamKey)} (${team.school})`,
@@ -51,7 +51,7 @@ export function AccelerationComparisonChart({ teams }: AccelerationComparisonCha
     }
   })
 
-  const chartData = [chartDataEntry]
+  const chartData: (typeof chartDataEntry)[] = [chartDataEntry]
 
   return (
     <Card>

@@ -5,7 +5,10 @@ import { TeamPerformance } from "./TeamPerformance"
 import { ComparisonView } from "./ComparisonView"
 import { Header } from "./Header"
 import { FilterBar } from "./FilterBar"
+import { ScoreDistribution } from "./ScoreDistribution"
 import { Top10Endurance } from "./Top10Endurance"
+import { StaticDynamicScatter } from "./StaticDynamicScatter"
+import { CompetitionAttendanceChart } from "./CompetitionAttendanceChart"
 import bajaData from "../../baja-data.json";
 import type { ViewKey } from "@/types/views"
 
@@ -17,15 +20,16 @@ interface TeamData {
 }
 
 export function Dashboard() {
-  const [activeView, setActiveView] = useState<ViewKey>("overview");
+  const [activeView, setActiveView] = useState<ViewKey>("event");
   const [data, setData] = useState<Record<string, Record<string, TeamData>>>({});
   const [competitions, setCompetitions] = useState<string[]>([]);
   const [schools, setSchools] = useState<{ value: string; label: string }[]>([]);
   const [selectedCompetition, setSelectedCompetition] = useState<string>("");
   const [selectedSchool, setSelectedSchool] = useState<string>("");
   const [visitedViews, setVisitedViews] = useState<Record<ViewKey, boolean>>({
-    overview: false,
-    teams: false,
+    overall: false,
+    event: false,
+    team: false,
     compare: false,
   });
 
@@ -85,7 +89,7 @@ export function Dashboard() {
     <div className="min-h-screen bg-background">
       <div className="sticky top-0 z-50">
         <Header activeView={activeView} setActiveView={setActiveView} />
-        {activeView !== "compare" && (
+        {activeView !== "compare" && activeView !== "overall" && (
           <FilterBar 
             schools={schools}
             selectedSchool={selectedSchool}
@@ -93,36 +97,49 @@ export function Dashboard() {
             competitions={competitions}
             selectedCompetition={selectedCompetition}
             setSelectedCompetition={setSelectedCompetition}
+            activeView={activeView}
           />
         )}
       </div>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 space-y-6">
-        {activeView === "overview" && (
+        {activeView === "overall" && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <CompetitionOverview
-                selectedCompetition={selectedCompetition}
-                selectedSchool={selectedSchool}
-                suppressInitialAnimation={visitedViews.overview}
-              />
-              <Top10Endurance
-                selectedCompetition={selectedCompetition}
-                selectedSchool={selectedSchool}
-                suppressInitialAnimation={visitedViews.overview}
-              />
-            </div>
-            <MostConsistentPrograms />
+             <CompetitionAttendanceChart suppressInitialAnimation={visitedViews.overall} />
+             <MostConsistentPrograms />
           </div>
         )}
 
-        {activeView === "teams" && (
+        {activeView === "event" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CompetitionOverview
+                selectedCompetition={selectedCompetition}
+                suppressInitialAnimation={visitedViews.event}
+              />
+              <Top10Endurance
+                selectedCompetition={selectedCompetition}
+                suppressInitialAnimation={visitedViews.event}
+              />
+              <ScoreDistribution
+                selectedCompetition={selectedCompetition}
+                suppressInitialAnimation={visitedViews.event}
+              />
+              <StaticDynamicScatter
+                selectedCompetition={selectedCompetition}
+                suppressInitialAnimation={visitedViews.event}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeView === "team" && (
           <div className="space-y-6">
             <TeamPerformance
               selectedSchool={selectedSchool}
               selectedCompetition={selectedCompetition}
-              suppressInitialAnimation={visitedViews.teams}
+              suppressInitialAnimation={visitedViews.team}
             />
           </div>
         )}
