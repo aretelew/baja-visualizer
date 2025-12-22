@@ -145,11 +145,7 @@ export function Dashboard() {
         )}
 
         {activeView === "compare" && (
-          <ComparisonView
-            schools={schools}
-            selectedCompetition={selectedCompetition}
-            selectedSchool={selectedSchool}
-          />
+            <ComparisonView />
         )}
       </main>
     </div>

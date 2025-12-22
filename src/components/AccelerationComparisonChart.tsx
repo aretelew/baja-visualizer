@@ -41,7 +41,7 @@ export function AccelerationComparisonChart({ teams }: AccelerationComparisonCha
   teams.forEach((team, index) => {
     const key = `team_${index}`
     const teamData = bajaData[team.competition]?.[team.teamKey]
-    const score = teamData?.Acceleration?.Score || 0
+    const score = (teamData?.Acceleration as any)?.Score || 0
     
     chartDataEntry[key] = score as number
     

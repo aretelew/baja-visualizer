@@ -167,7 +167,6 @@ export function StaticDynamicScatter({
                 strokeWidth={1}
                 line={false}
                 shape="circle"
-                size={100}
                 isAnimationActive={shouldAnimate}
             />
           </ScatterChart>

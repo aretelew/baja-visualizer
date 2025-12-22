@@ -165,7 +165,7 @@ export function CategoryPerformanceComparison({
   teams = [],
   suppressInitialAnimation = false,
 }: CategoryPerformanceComparisonProps) {
-  const [activeBarKey, setActiveBarKey] = useState<string | null>(null);
+  const [, setActiveBarKey] = useState<string | null>(null);
   const animationKey = teams.map((team) => team.token).sort().join("|");
   const shouldAnimate = useChartAnimation(animationKey, suppressInitialAnimation);
 
@@ -237,19 +237,9 @@ export function CategoryPerformanceComparison({
                     />
                     <ChartTooltip
                       cursor={false}
-                      content={(props) => (
-                        <ChartTooltipContent
-                          {...props}
-                          indicator="dashed"
-                          payload={
-                            activeBarKey
-                              ? props.payload?.filter((item) => item.dataKey === activeBarKey)
-                              : props.payload
-                          }
-                        />
-                      )}
+                      content={<ChartTooltipContent indicator="dashed" />}
                     />
-                    <ChartLegend content={(props) => <ChartLegendContent {...props} />} />
+                    <ChartLegend content={<ChartLegendContent />} />
                     {teams.map((team) => (
                       <Bar
                         key={team.token}

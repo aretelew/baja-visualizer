@@ -85,11 +85,11 @@ function readSectionPoints(teamData: TeamData, category: string): number | null 
     const section = teamData?.[sectionKey];
     if (!section) continue;
     for (const scoreKey of aliasCfg.scoreKeys) {
-      const val = coerceNumber(section[scoreKey]);
+      const val = coerceNumber((section as Record<string, unknown>)[scoreKey]);
       if (val != null) return val;
     }
     // Generic fallback: find first numeric key that includes "Score"
-    const candidate = Object.entries(section).find(([k, v]) => /score/i.test(k) && typeof v === "number");
+    const candidate = Object.entries(section as Record<string, unknown>).find(([k, v]) => /score/i.test(k) && typeof v === "number");
     if (candidate && typeof candidate[1] === "number") return candidate[1] as number;
   }
   return null;
