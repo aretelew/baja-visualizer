@@ -20,7 +20,7 @@ interface TeamData {
 }
 
 export function Dashboard() {
-  const [activeView, setActiveView] = useState<ViewKey>("event");
+  const [activeView, setActiveView] = useState<ViewKey>("overall");
   const [data, setData] = useState<Record<string, Record<string, TeamData>>>({});
   const [competitions, setCompetitions] = useState<string[]>([]);
   const [schools, setSchools] = useState<{ value: string; label: string }[]>([]);

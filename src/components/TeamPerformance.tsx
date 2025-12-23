@@ -8,6 +8,8 @@ import { Line, LineChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } fro
 import { BajaDynamicRadarChart } from "./BajaDynamicRadarChart"
 import { BajaStaticRadarChart } from "./BajaStaticRadarChart"
 import { useChartAnimation } from "@/hooks/useChartAnimation"
+import { AccelerationCard } from "./AccelerationCard"
+import { ManeuverabilityCard } from "./ManeuverabilityCard"
 
 type OverallData = {
   "School": string;
@@ -23,12 +25,23 @@ type OverallData = {
   "Endurance (400)": number;
 };
 
+interface AccelerationData {
+  "Rank": number;
+  "Time Run 1": number | string;
+  "Time Run 2": number | string;
+  "Best Time": number | string;
+  "Score": number;
+  "Track Length"?: "100ft" | "150ft";
+}
+
 interface Team {
   Overall: {
     School: string;
     team_key: string;
     "Overall (1000)": number;
   } & Partial<OverallData>;
+  Acceleration?: AccelerationData;
+  Maneuverability?: any;
 }
 
 interface CompetitionData {
@@ -74,6 +87,30 @@ export function TeamPerformance({
   // For team stats, we only consider competitions they participated in.
   const teamPerformanceStats = useMemo(() => chartData.filter(d => d.score !== 0), [chartData]);
 
+  const { teamRecord100, teamRecord150 } = useMemo(() => {
+    let best100 = Infinity;
+    let best150 = Infinity;
+
+    teamPerformanceStats.forEach(stat => {
+      const acc = stat.fullData?.Acceleration;
+      if (acc && acc["Best Time"]) {
+        const time = parseFloat(String(acc["Best Time"]));
+        if (time > 0) {
+          if (acc["Track Length"] === "100ft" && time < best100) {
+            best100 = time;
+          } else if (acc["Track Length"] === "150ft" && time < best150) {
+            best150 = time;
+          }
+        }
+      }
+    });
+
+    return {
+      teamRecord100: best100 === Infinity ? undefined : best100,
+      teamRecord150: best150 === Infinity ? undefined : best150
+    };
+  }, [teamPerformanceStats]);
+
   const [selectedCompetition, setSelectedCompetition] = useState<CompetitionData | undefined>();
   const animationKey = `${selectedSchool || "none"}-${currentCompetition || "all"}`;
   const shouldAnimate = useChartAnimation(animationKey, suppressInitialAnimation);
@@ -84,6 +121,46 @@ export function TeamPerformance({
         setSelectedCompetition(comp);
     }
   }, [currentCompetition, teamPerformanceStats]);
+
+  // Calculate competition stats for Acceleration Card
+  const currentCompKey = selectedCompetition?.competition;
+  const compTeams = useMemo(() => {
+    if (!currentCompKey) return null;
+    return bajaData[currentCompKey as keyof typeof bajaData];
+  }, [currentCompKey]);
+
+  const { p1Time, totalTeams } = useMemo(() => {
+    if (!compTeams) return { p1Time: undefined, totalTeams: 0 };
+    
+    const teams = Object.values(compTeams) as Team[];
+    const times = teams
+      .map((t: Team) => {
+        const time = parseFloat(String(t.Acceleration?.["Best Time"] || 0));
+        return isNaN(time) ? 0 : time;
+      })
+      .filter((t) => t > 0);
+      
+    return {
+      p1Time: times.length > 0 ? Math.min(...times) : undefined,
+      totalTeams: teams.length
+    };
+  }, [compTeams]);
+
+  const { p1ManeuverabilityTime } = useMemo(() => {
+    if (!compTeams) return { p1ManeuverabilityTime: undefined };
+    
+    const teams = Object.values(compTeams) as Team[];
+    const times = teams
+      .map((t: Team) => {
+        const time = parseFloat(String(t.Maneuverability?.["Best Time"] || 0));
+        return isNaN(time) ? 0 : time;
+      })
+      .filter((t) => t > 0);
+      
+    return {
+      p1ManeuverabilityTime: times.length > 0 ? Math.min(...times) : undefined
+    };
+  }, [compTeams]);
 
   // Calculate team statistics from filtered data
   const scores = teamPerformanceStats.map((p) => p.score) as number[]
@@ -100,8 +177,6 @@ export function TeamPerformance({
       displayedYears.add(year);
     }
   }
-
-
 
   return (
     <div className="space-y-6">
@@ -200,8 +275,10 @@ export function TeamPerformance({
       <div className="pt-6">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-semibold leading-none tracking-tight text-white">Event Scores</h2>
-            <p className="text-sm text-muted-foreground pt-2">Scores for {selectedCompetition?.competition}</p>
+            <h2 className="text-2xl font-semibold leading-none tracking-tight text-white">Event Performance Radar Charts</h2>
+            <p className="text-sm text-muted-foreground pt-2">
+              Visualize relative strengths and weaknesses to identify areas for improvement.
+            </p>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-6">
@@ -221,6 +298,29 @@ export function TeamPerformance({
                 />
               )}
           </div>
+        </div>
+      </div>
+
+      {/* Event Results */}
+      <div className="pt-6">
+        <h2 className="text-2xl font-semibold leading-none tracking-tight text-white mb-4">Event Results</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {selectedCompetition?.fullData?.Acceleration && (
+            <AccelerationCard 
+              data={selectedCompetition.fullData.Acceleration} 
+              p1Time={p1Time} 
+              totalTeams={totalTeams}
+              teamRecord100={teamRecord100}
+              teamRecord150={teamRecord150}
+            />
+          )}
+          {selectedCompetition?.fullData?.Maneuverability && (
+            <ManeuverabilityCard 
+              data={selectedCompetition.fullData.Maneuverability} 
+              p1Time={p1ManeuverabilityTime} 
+              totalTeams={totalTeams}
+            />
+          )}
         </div>
       </div>
     </div>
